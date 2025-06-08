@@ -46,7 +46,7 @@
                         
                         <div>
                             <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                            <input type="date" id="date" name="date" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="date" name="date" required placeholder="MM/dd/yyyy" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
                         <div>
@@ -130,7 +130,7 @@
             const generateBtn = document.getElementById('generate-btn');
             const vendorForm = document.getElementById('vendor-form');
             const vendorSelect = document.getElementById('vendor');
-            const vendorListDisplay = document.getElementById('vendor-list-display'); // New element for display
+            const vendorListDisplay = document.getElementById('vendor-list-display'); 
             const itemSelect = document.getElementById('item');
             const priceInput = document.getElementById('price');
             const customPriceCheckbox = document.getElementById('custom-price-checkbox');
@@ -173,20 +173,16 @@
                     
                     const vendors = await response.json();
                     
-                    // Clear previous content
                     vendorSelect.innerHTML = ''; 
                     vendorListDisplay.innerHTML = '';
 
                     if (vendors.length > 0) {
                         vendors.forEach(vendor => {
-                            // Populate the dropdown select
                             const option = document.createElement('option');
-                            // Use lowercase 'name' and 'email' to match the keys from the backend
                             option.value = JSON.stringify({ name: vendor.name, email: vendor.email });
                             option.textContent = vendor.name;
                             vendorSelect.appendChild(option);
 
-                            // Populate the display list in the manage vendors tab
                             const vendorEl = document.createElement('div');
                             vendorEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
                             vendorEl.innerHTML = `
@@ -239,9 +235,7 @@
 
                     showToast(result.message);
                     vendorForm.reset();
-                    // Refresh the vendor list in the invoice form
                     await fetchAndRenderVendors();
-                    // Switch back to the invoice view for convenience
                     switchView('invoice');
 
                 } catch (error) {
@@ -263,8 +257,21 @@
                 }
             };
 
+            const isValidDate = (dateString) => {
+                const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+                return regex.test(dateString);
+            };
+
             const handleInvoiceSubmit = async (e) => {
                 e.preventDefault();
+
+                // Frontend validation
+                const dateValue = dateInput.value;
+                if (!isValidDate(dateValue)) {
+                    showToast('Invalid date format. Please use MM/dd/yyyy.', true);
+                    return;
+                }
+                
                 generateBtn.textContent = 'Generating...';
                 generateBtn.disabled = true;
                 generateBtn.classList.add('btn-disabled');
@@ -306,7 +313,11 @@
             };
 
             const setInitialDate = () => {
-                dateInput.value = new Date().toISOString().split('T')[0];
+                const today = new Date();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const year = today.getFullYear();
+                dateInput.value = `${month}/${day}/${year}`;
             };
 
             const initializeApp = () => {

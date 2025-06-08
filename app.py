@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from reportlab.lib.pagesizes import letter
@@ -14,7 +15,6 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
-import urllib.request
 import io
 import requests
 
@@ -25,30 +25,30 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # --- Configuration ---
-# This configuration is now set up for Brevo (formerly Sendinblue).
+# These settings are now loaded from environment variables for security.
+# For local development, you can create a .env file and use a library like python-dotenv.
 
 # === PRODUCTION CONFIG (Brevo) ===
-
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL')    
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 
 # === GOOGLE APIS CONFIG (SHEETS & DRIVE) ===
 GOOGLE_CREDENTIALS_FILE = 'credentials.json' # Used as a fallback for local dev
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
-# The name of the specific sheet (tab) for vendors
+# The name of the specific sheet (tab) for vendors and invoices
 GOOGLE_VENDORS_SHEET_NAME = 'Vendors'
+GOOGLE_INVOICES_SHEET_NAME = 'Invoices' 
 GOOGLE_DRIVE_FOLDER_NAME = os.environ.get('GOOGLE_DRIVE_FOLDER_NAME')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
 CORS(app)
 
-## --- Helper function for Google Credentials ---
+# --- Helper Functions ---
 def get_google_creds():
     """
     Gets Google credentials from an environment variable or a local file.
@@ -65,6 +65,11 @@ def get_google_creds():
     else:
         raise FileNotFoundError("Google credentials not found. Set GOOGLE_CREDENTIALS_JSON or provide a 'credentials.json' file.")
     return creds
+
+def is_valid_email(email):
+    """Simple regex for email validation."""
+    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(regex, email)
 
 # --- Google Drive Integration ---
 def upload_to_google_drive(file_path, file_name):
@@ -96,6 +101,21 @@ def upload_to_google_drive(file_path, file_name):
         print(f"An error occurred with Google Drive integration: {e}")
 
 # --- Google Sheets Integration ---
+def get_next_invoice_number():
+    """Generates a new sequential invoice number based on records in Google Sheet."""
+    try:
+        creds = get_google_creds()
+        client = gspread.authorize(creds)
+        sh = client.open(GOOGLE_SHEET_NAME)
+        worksheet = sh.worksheet(GOOGLE_INVOICES_SHEET_NAME)
+        num_invoices = len(worksheet.get_all_records())
+        next_num = num_invoices + 1
+        invoice_number = f"INV-{next_num:04d}" # Format: INV-0001, INV-0002, etc.
+        return invoice_number
+    except Exception as e:
+        print(f"Error generating invoice number: {e}. Using fallback.")
+        return f"INV-TS-{int(datetime.now().timestamp())}"
+
 def add_invoice_to_sheet(data):
     """Adds a new row with invoice data to the specified Google Sheet."""
     try:
@@ -103,13 +123,26 @@ def add_invoice_to_sheet(data):
         client = gspread.authorize(creds)
         
         sh = client.open(GOOGLE_SHEET_NAME)
-        worksheet = sh.worksheet('Invoices') # Assuming the invoice sheet is named 'Invoices'
+        worksheet = sh.worksheet(GOOGLE_INVOICES_SHEET_NAME)
         
         total = float(data['quantity']) * float(data['price'])
-        new_row = [datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data['date'], data['vendor_name'], data['vendor_email'], data['item'], data['quantity'], data['price'], total, data.get('notes', '')]
+        # New row now includes the dynamic invoice number
+        new_row = [
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            data['invoice_num'],
+            data['date'], 
+            data['vendor_name'], 
+            data['vendor_email'], 
+            data['item'], 
+            data['quantity'], 
+            data['price'], 
+            total, 
+            data.get('notes', '')
+        ]
 
         if len(worksheet.get_all_records()) == 0:
-            worksheet.append_row(["Timestamp", "Invoice Date", "Vendor Name", "Vendor Email", "Item", "Quantity", "Unit Price", "Total", "Notes"])
+            header = ["Timestamp", "Invoice #", "Invoice Date", "Vendor Name", "Vendor Email", "Item", "Quantity", "Unit Price", "Total", "Notes"]
+            worksheet.append_row(header)
 
         worksheet.append_row(new_row)
         print("Successfully added new row to Google Sheet.")
@@ -118,7 +151,7 @@ def add_invoice_to_sheet(data):
 
 # --- PDF Generation Logic ---
 def create_invoice_pdf(data):
-    file_name = f"invoice_{data['vendor_name'].replace(' ', '_')}_{data['date']}.pdf"
+    file_name = f"{data['invoice_num']}_{data['vendor_name'].replace(' ', '_')}.pdf"
     temp_dir = '/tmp'
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -146,7 +179,7 @@ def create_invoice_pdf(data):
     elements.append(header_table)
     elements.append(Spacer(1, 0.2*inch))
     
-    company_info_data = [[Paragraph("<b>Your Company Name</b><br/>123 Sweet Lane<br/>Pastryville, PV 54321", styles['Normal']), Paragraph(f"<b>Invoice #:</b> INV-001<br/><b>Date:</b> {datetime.strptime(data['date'], '%Y-%m-%d').strftime('%B %d, %Y')}", styles['CompanyInfo'])]]
+    company_info_data = [[Paragraph("<b>Your Company Name</b><br/>123 Sweet Lane<br/>Pastryville, PV 54321", styles['Normal']), Paragraph(f"<b>Invoice #:</b> {data['invoice_num']}<br/><b>Date:</b> {datetime.strptime(data['date'], '%m/%d/%Y').strftime('%B %d, %Y')}", styles['CompanyInfo'])]]
     company_info_table = Table(company_info_data, colWidths=[3.5*inch, 3*inch])
     company_info_table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
     elements.append(company_info_table)
@@ -211,11 +244,9 @@ def get_vendors():
         worksheet = sh.worksheet(GOOGLE_VENDORS_SHEET_NAME)
         records = worksheet.get_all_records()
         
-        # Standardize keys to lowercase to ensure consistency for the frontend
         standardized_vendors = []
         for record in records:
-            # Create a new dictionary with lowercase keys
-            standardized_record = {key.lower(): value for key, value in record.items()}
+            standardized_record = {key.strip().lower(): value for key, value in record.items()}
             standardized_vendors.append(standardized_record)
             
         return jsonify(standardized_vendors), 200
@@ -225,11 +256,14 @@ def get_vendors():
 
 @app.route('/add-vendor', methods=['POST'])
 def add_vendor():
-    """Adds a new vendor to the Google Sheet."""
+    """Adds a new vendor to the Google Sheet with validation."""
     try:
         data = request.get_json()
         if not data or 'name' not in data or 'email' not in data:
             return jsonify({"error": "Missing vendor name or email."}), 400
+        
+        if not is_valid_email(data['email']):
+            return jsonify({"error": "Invalid email format provided."}), 400
         
         creds = get_google_creds()
         client = gspread.authorize(creds)
@@ -246,23 +280,45 @@ def add_vendor():
 
 @app.route('/generate-invoice', methods=['POST'])
 def generate_invoice():
-    """API endpoint for the complete invoice generation and storage process."""
+    """API endpoint for the complete invoice generation and storage process with validation."""
     try:
         data = request.get_json()
         required_fields = ['vendor_name', 'vendor_email', 'date', 'item', 'quantity', 'price']
-        if not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields"}), 400
+        if not all(field in data and data[field] != '' for field in required_fields):
+            return jsonify({"error": "All fields are required."}), 400
+
+        # --- Data Validation ---
+        if not is_valid_email(data['vendor_email']):
+            return jsonify({"error": "Invalid vendor email format."}), 400
+        
+        try:
+            # Validate numeric fields
+            float(data['quantity'])
+            float(data['price'])
+        except ValueError:
+            return jsonify({"error": "Quantity and Price must be valid numbers."}), 400
+
+        try:
+            # Validate date format to MM/dd/yyyy
+            datetime.strptime(data['date'], '%m/%d/%Y')
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Please use MM/dd/yyyy."}), 400
+
+        # --- Generate unique invoice number ---
+        invoice_num = get_next_invoice_number()
+        data['invoice_num'] = invoice_num # Add to data dict
         
         pdf_path, pdf_filename = create_invoice_pdf(data)
         subject = f"Invoice from Your Company for {data['item']}"
         body = f"Hello {data['vendor_name']},\n\nPlease find attached the invoice for your recent order.\n\nThank you,\nYour Company Name"
+        
         send_email_with_attachment(data['vendor_email'], subject, body, pdf_path)
         add_invoice_to_sheet(data)
         upload_to_google_drive(pdf_path, pdf_filename)
         
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
-        return jsonify({"message": f"Process complete for invoice to {data['vendor_email']}."}), 200
+        return jsonify({"message": f"Invoice {invoice_num} successfully generated and sent."}), 200
 
     except Exception as e:
         print(f"An unexpected error occurred in the main process: {e}")
@@ -287,11 +343,11 @@ def check_env_vars():
     print("Environment variables and credentials check passed.")
 
 # --- Run the App ---
+# For local development, use a .env file and the `flask run` command.
+# For production, a WSGI server like gunicorn will run the 'app' object.
 if __name__ == '__main__':
-    # For local development, you can use a .env file.
     from dotenv import load_dotenv
     load_dotenv()
-
     check_env_vars()
-    app.run(debug=True)
-
+    # Note: app.run() is for development only. Gunicorn is used in production.
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
