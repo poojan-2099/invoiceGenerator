@@ -40,7 +40,7 @@ GOOGLE_CREDENTIALS_FILE = 'credentials.json' # Used as a fallback for local dev
 GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 # The name of the specific sheet (tab) for vendors and invoices
 GOOGLE_VENDORS_SHEET_NAME = 'Vendors'
-GOOGLE_INVOICES_SHEET_NAME = 'Invoices' 
+GOOGLE_INVOICES_SHEET_NAME = os.environ.get('GOOGLE_INVOICES_SHEET_NAME', 'Invoices')
 GOOGLE_DRIVE_FOLDER_NAME = os.environ.get('GOOGLE_DRIVE_FOLDER_NAME')
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
@@ -123,6 +123,7 @@ def add_invoice_to_sheet(data):
         client = gspread.authorize(creds)
         
         sh = client.open(GOOGLE_SHEET_NAME)
+        # Correctly use the variable for the invoice sheet name
         worksheet = sh.worksheet(GOOGLE_INVOICES_SHEET_NAME)
         
         total = float(data['quantity']) * float(data['price'])
