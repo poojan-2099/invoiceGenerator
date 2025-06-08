@@ -1,0 +1,19 @@
+# --- Secrets and Credentials ---
+# Ignore the local environment file
+.env
+
+# Ignore the Google Cloud service account key
+credentials.json
+
+# --- Python ---
+# Ignore Python's cache directory
+__pycache__/
+
+# Ignore virtual environment folders
+venv/
+.venv/
+env/
+
+# --- IDE/Editor ---
+# Ignore VS Code settings folder
+.vscode/

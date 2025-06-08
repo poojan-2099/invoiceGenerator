@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malkit Sweet and Catering Invoice Generator</title>
+    <!-- Tailwind CSS for styling -->
+    <link rel="icon" type="image/png" href="https://malkitsweetsandcatering.com/img/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .view { display: none; transition: opacity 0.3s ease-in-out; }
+        .view.active { display: block; opacity: 1; }
+        .btn-disabled { cursor: not-allowed; background-color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900">Invoice Generator</h1>
+            <p class="text-gray-600 mt-2">Create and send professional invoices in seconds.</p>
+        </header>
+
+        <div class="mb-6 bg-white rounded-lg shadow p-2 flex space-x-2">
+            <button id="nav-invoice" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-indigo-600 text-white">Create Invoice</button>
+            <button id="nav-vendors" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Manage Vendors</button>
+        </div>
+
+        <main>
+            <!-- View 1: Invoice Generator -->
+            <div id="view-invoice" class="view active bg-white p-8 rounded-xl shadow-lg">
+                <form id="invoice-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="vendor" class="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+                            <select id="vendor" name="vendor" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input type="date" id="date" name="date" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label for="item" class="block text-sm font-medium text-gray-700 mb-1">Item (Indian Sweets)</label>
+                            <select id="item" name="item" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="" disabled selected>Select a sweet</option>
+                                <option value="Jalebi">Jalebi</option>
+                                <option value="Ladoo">Ladoo</option>
+                                <option value="Barfi">Barfi</option>
+                                <option value="Gulab Jamun">Gulab Jamun</option>
+                                <option value="Rasgulla">Rasgulla</option>
+                                <option value="Kaju Katli">Kaju Katli</option>
+                                <option value="Mysore Pak">Mysore Pak</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (in kg/pieces)</label>
+                            <input type="number" id="quantity" name="quantity" min="1" required placeholder="e.g., 5" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div class="md:col-span-2">
+                             <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price per unit (USD)</label>
+                             <div class="flex items-center">
+                                <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="e.g., 15.50" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <div class="flex items-center pl-4">
+                                     <input id="custom-price-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                     <label for="custom-price-checkbox" class="ml-2 block text-sm text-gray-900">Use Custom Price</label>
+                                 </div>
+                             </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea id="notes" name="notes" rows="4" placeholder="Any additional details..." class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 text-right">
+                        <button id="generate-btn" type="submit" class="w-full md:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            Generate & Send Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- View 2: Vendor Management -->
+            <div id="view-vendors" class="view bg-white p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-4">Add a New Vendor</h2>
+                <p class="text-gray-600 mb-6">Vendors added here will be available in the invoice form. The list is managed in your Google Sheet.</p>
+                <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" id="add-vendor-btn" class="mt-4 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Add Vendor to Sheet</button>
+                </form>
+
+                <!-- Vendor List Display -->
+                <div id="vendor-list-container">
+                    <h3 class="text-xl font-semibold mb-3">Current Vendor List</h3>
+                    <div id="vendor-list-display" class="space-y-3">
+                        <!-- Vendor list from Google Sheet will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <div id="toast" class="fixed top-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
+            <span id="toast-message"></span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navInvoiceBtn = document.getElementById('nav-invoice');
+            const navVendorsBtn = document.getElementById('nav-vendors');
+            const viewInvoice = document.getElementById('view-invoice');
+            const viewVendors = document.getElementById('view-vendors');
+            const invoiceForm = document.getElementById('invoice-form');
+            const generateBtn = document.getElementById('generate-btn');
+            const vendorForm = document.getElementById('vendor-form');
+            const vendorSelect = document.getElementById('vendor');
+            const vendorListDisplay = document.getElementById('vendor-list-display'); // New element for display
+            const itemSelect = document.getElementById('item');
+            const priceInput = document.getElementById('price');
+            const customPriceCheckbox = document.getElementById('custom-price-checkbox');
+            const dateInput = document.getElementById('date');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            const BASE_URL = 'http://127.0.0.1:5000'; // Replace with your production URL when deployed
+
+            const predefinedPrices = {
+                'Jalebi': 12.00, 'Ladoo': 18.50, 'Barfi': 22.00,
+                'Gulab Jamun': 15.00, 'Rasgulla': 14.00, 'Kaju Katli': 30.00, 'Mysore Pak': 20.00
+            };
+
+            const showToast = (message, isError = false) => {
+                toastMessage.textContent = message;
+                toast.className = toast.className.replace(/bg-gray-800|bg-red-600/g, '');
+                toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-800');
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 3000);
+            };
+
+            const switchView = (viewToShow) => {
+                [viewInvoice, viewVendors].forEach(view => view.classList.remove('active'));
+                [navInvoiceBtn, navVendorsBtn].forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+
+                if (viewToShow === 'invoice') {
+                    viewInvoice.classList.add('active');
+                    navInvoiceBtn.classList.add('bg-indigo-600', 'text-white');
+                } else {
+                    viewVendors.classList.add('active');
+                    navVendorsBtn.classList.add('bg-indigo-600', 'text-white');
+                }
+            };
+
+            const fetchAndRenderVendors = async () => {
+                try {
+                    const response = await fetch(`${BASE_URL}/get-vendors`);
+                    if (!response.ok) throw new Error('Failed to fetch vendors.');
+                    
+                    const vendors = await response.json();
+                    
+                    // Clear previous content
+                    vendorSelect.innerHTML = ''; 
+                    vendorListDisplay.innerHTML = '';
+
+                    if (vendors.length > 0) {
+                        vendors.forEach(vendor => {
+                            // Populate the dropdown select
+                            const option = document.createElement('option');
+                            // Use lowercase 'name' and 'email' to match the keys from the backend
+                            option.value = JSON.stringify({ name: vendor.name, email: vendor.email });
+                            option.textContent = vendor.name;
+                            vendorSelect.appendChild(option);
+
+                            // Populate the display list in the manage vendors tab
+                            const vendorEl = document.createElement('div');
+                            vendorEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+                            vendorEl.innerHTML = `
+                                <div>
+                                    <p class="font-semibold">${vendor.name}</p>
+                                    <p class="text-sm text-gray-500">${vendor.email}</p>
+                                </div>
+                            `;
+                            vendorListDisplay.appendChild(vendorEl);
+                        });
+                    } else {
+                        const option = document.createElement('option');
+                        option.textContent = 'No vendors found. Please add one.';
+                        option.disabled = true;
+                        vendorSelect.appendChild(option);
+                        vendorListDisplay.innerHTML = `<p class="text-gray-500">No vendors found in your Google Sheet.</p>`;
+                    }
+                } catch (error) {
+                    showToast(error.message, true);
+                    vendorSelect.innerHTML = '<option disabled>Error loading vendors</option>';
+                    vendorListDisplay.innerHTML = `<p class="text-red-500">Could not load vendors.</p>`;
+                }
+            };
+            
+            const handleAddVendor = async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('add-vendor-btn');
+                const nameInput = document.getElementById('vendor-name');
+                const emailInput = document.getElementById('vendor-email');
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+
+                if (!name || !email) {
+                    showToast('Please provide both name and email.', true);
+                    return;
+                }
+
+                btn.textContent = 'Adding...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`${BASE_URL}/add-vendor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email }),
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to add vendor.');
+
+                    showToast(result.message);
+                    vendorForm.reset();
+                    // Refresh the vendor list in the invoice form
+                    await fetchAndRenderVendors();
+                    // Switch back to the invoice view for convenience
+                    switchView('invoice');
+
+                } catch (error) {
+                    showToast(error.message, true);
+                } finally {
+                    btn.textContent = 'Add Vendor to Sheet';
+                    btn.disabled = false;
+                }
+            };
+
+            const updatePrice = () => {
+                if (customPriceCheckbox.checked) {
+                    priceInput.readOnly = false;
+                    priceInput.classList.remove('bg-gray-200');
+                } else {
+                    priceInput.readOnly = true;
+                    priceInput.classList.add('bg-gray-200');
+                    priceInput.value = predefinedPrices[itemSelect.value] || '';
+                }
+            };
+
+            const handleInvoiceSubmit = async (e) => {
+                e.preventDefault();
+                generateBtn.textContent = 'Generating...';
+                generateBtn.disabled = true;
+                generateBtn.classList.add('btn-disabled');
+
+                const formData = new FormData(invoiceForm);
+                const vendorData = JSON.parse(formData.get('vendor'));
+                
+                const invoiceData = {
+                    vendor_name: vendorData.name,
+                    vendor_email: vendorData.email,
+                    date: formData.get('date'),
+                    item: formData.get('item'),
+                    quantity: formData.get('quantity'),
+                    price: formData.get('price'),
+                    notes: formData.get('notes')
+                };
+
+                try {
+                    const response = await fetch(`${BASE_URL}/generate-invoice`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(invoiceData),
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to generate invoice.');
+
+                    showToast(result.message);
+                    invoiceForm.reset();
+                    setInitialDate();
+                    updatePrice();
+                } catch (error) {
+                    showToast(error.message, true);
+                } finally {
+                    generateBtn.textContent = 'Generate & Send Invoice';
+                    generateBtn.disabled = false;
+                    generateBtn.classList.remove('btn-disabled');
+                }
+            };
+
+            const setInitialDate = () => {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            };
+
+            const initializeApp = () => {
+                navInvoiceBtn.addEventListener('click', () => switchView('invoice'));
+                navVendorsBtn.addEventListener('click', () => switchView('vendors'));
+                vendorForm.addEventListener('submit', handleAddVendor);
+                itemSelect.addEventListener('change', updatePrice);
+                customPriceCheckbox.addEventListener('change', updatePrice);
+                invoiceForm.addEventListener('submit', handleInvoiceSubmit);
+
+                fetchAndRenderVendors();
+                setInitialDate();
+                updatePrice();
+                switchView('invoice');
+            };
+
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
