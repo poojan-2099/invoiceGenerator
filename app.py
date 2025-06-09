@@ -179,7 +179,7 @@ def create_invoice_pdf(data):
     elements.append(header_table)
     elements.append(Spacer(1, 0.2*inch))
     
-    company_info_data = [[Paragraph("<b>MALKIT SWEETS AND CATERING</b><br/>123 Sweet Lane<br/>Pastryville, PV 54321", styles['Normal']), Paragraph(f"<b>Invoice #:</b> {data['invoice_num']}<br/><b>Date:</b> {datetime.strptime(data['date'], '%m/%d/%Y').strftime('%B %d, %Y')}", styles['CompanyInfo'])]]
+    company_info_data = [[Paragraph("<b>Malkit Sweets and Catering</b><br/>18111 Parthenia St<br/>Northridge, CA 91324", styles['Normal']), Paragraph(f"<b>Invoice #:</b> {data['invoice_num']}<br/><b>Date:</b> {datetime.strptime(data['date'], '%m/%d/%Y').strftime('%B %d, %Y')}", styles['CompanyInfo'])]]
     company_info_table = Table(company_info_data, colWidths=[3.5*inch, 3*inch])
     company_info_table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
     elements.append(company_info_table)
