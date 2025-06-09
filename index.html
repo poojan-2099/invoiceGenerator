@@ -64,7 +64,7 @@
                         </div>
 
                         <div>
-                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (in lbs)</label>
+                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (lbs)</label>
                             <input type="number" id="quantity" name="quantity" min="1" required placeholder="e.g., 5" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
@@ -96,13 +96,13 @@
             <!-- View 2: Vendor Management -->
             <div id="view-vendors" class="view bg-white p-8 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold mb-4">Add a New Vendor</h2>
-                <p class="text-gray-600 mb-6">Vendors added here will be available in the invoice form. The list is managed in your Google Sheet.</p>
+                <p class="text-gray-600 mb-6">Vendors added here will be available in the invoice form</p>
                 <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                         <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    <button type="submit" id="add-vendor-btn" class="mt-4 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Add Vendor to Sheet</button>
+                    <button type="submit" id="add-vendor-btn" class="mt-4 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Add Vendor</button>
                 </form>
 
                 <!-- Vendor List Display -->
@@ -117,6 +117,29 @@
         
         <div id="toast" class="fixed top-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
             <span id="toast-message"></span>
+        </div>
+
+        <!-- Edit Vendor Modal -->
+        <div id="edit-vendor-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-6">Edit Vendor</h2>
+                <form id="edit-vendor-form">
+                    <input type="hidden" id="edit-vendor-row">
+                    <div class="mb-4">
+                        <label for="edit-vendor-name" class="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
+                        <input type="text" id="edit-vendor-name" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="mb-6">
+                        <label for="edit-vendor-email" class="block text-sm font-medium text-gray-700 mb-1">Vendor Email</label>
+                        <input type="email" id="edit-vendor-email" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors">Save Changes</button>
+                        <button type="button" id="delete-vendor-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+                        <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -137,6 +160,15 @@
             const dateInput = document.getElementById('date');
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
+            
+            // Edit Modal Elements
+            const editModal = document.getElementById('edit-vendor-modal');
+            const editForm = document.getElementById('edit-vendor-form');
+            const editVendorRowInput = document.getElementById('edit-vendor-row');
+            const editVendorNameInput = document.getElementById('edit-vendor-name');
+            const editVendorEmailInput = document.getElementById('edit-vendor-email');
+            const deleteVendorBtn = document.getElementById('delete-vendor-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
             const BASE_URL = 'https://invoicegenerator-wine.onrender.com'; // Replace with your production URL when deployed
 
@@ -166,6 +198,17 @@
                 }
             };
 
+            const openEditModal = (vendor) => {
+                editVendorRowInput.value = vendor.row_number;
+                editVendorNameInput.value = vendor.name;
+                editVendorEmailInput.value = vendor.email;
+                editModal.classList.remove('hidden');
+            };
+
+            const closeEditModal = () => {
+                editModal.classList.add('hidden');
+            };
+
             const fetchAndRenderVendors = async () => {
                 try {
                     const response = await fetch(`${BASE_URL}/get-vendors`);
@@ -190,7 +233,9 @@
                                     <p class="font-semibold">${vendor.name}</p>
                                     <p class="text-sm text-gray-500">${vendor.email}</p>
                                 </div>
+                                <button class="edit-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded hover:bg-blue-600">Edit</button>
                             `;
+                            vendorEl.querySelector('.edit-btn').addEventListener('click', () => openEditModal(vendor));
                             vendorListDisplay.appendChild(vendorEl);
                         });
                     } else {
@@ -210,39 +255,73 @@
             const handleAddVendor = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('add-vendor-btn');
-                const nameInput = document.getElementById('vendor-name');
-                const emailInput = document.getElementById('vendor-email');
-                const name = nameInput.value.trim();
-                const email = emailInput.value.trim();
+                const name = document.getElementById('vendor-name').value.trim();
+                const email = document.getElementById('vendor-email').value.trim();
 
-                if (!name || !email) {
-                    showToast('Please provide both name and email.', true);
-                    return;
-                }
+                if (!name || !email) { return showToast('Please provide both name and email.', true); }
 
-                btn.textContent = 'Adding...';
-                btn.disabled = true;
-
+                btn.textContent = 'Adding...'; btn.disabled = true;
                 try {
                     const response = await fetch(`${BASE_URL}/add-vendor`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name, email }),
                     });
-
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to add vendor.');
-
                     showToast(result.message);
                     vendorForm.reset();
                     await fetchAndRenderVendors();
                     switchView('invoice');
-
                 } catch (error) {
                     showToast(error.message, true);
                 } finally {
-                    btn.textContent = 'Add Vendor to Sheet';
-                    btn.disabled = false;
+                    btn.textContent = 'Add Vendor to Sheet'; btn.disabled = false;
+                }
+            };
+            
+            const handleEditVendor = async (e) => {
+                e.preventDefault();
+                const vendorData = {
+                    row_number: parseInt(editVendorRowInput.value, 10),
+                    name: editVendorNameInput.value.trim(),
+                    email: editVendorEmailInput.value.trim()
+                };
+
+                try {
+                    const response = await fetch(`${BASE_URL}/edit-vendor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(vendorData),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to update vendor.');
+                    showToast(result.message);
+                    closeEditModal();
+                    await fetchAndRenderVendors();
+                } catch (error) {
+                    showToast(error.message, true);
+                }
+            };
+
+            const handleDeleteVendor = async () => {
+                if (!confirm('Are you sure you want to delete this vendor? This cannot be undone.')) {
+                    return;
+                }
+                const row_number = parseInt(editVendorRowInput.value, 10);
+                try {
+                    const response = await fetch(`${BASE_URL}/delete-vendor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ row_number }),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to delete vendor.');
+                    showToast(result.message);
+                    closeEditModal();
+                    await fetchAndRenderVendors();
+                } catch (error) {
+                    showToast(error.message, true);
                 }
             };
 
@@ -257,36 +336,18 @@
                 }
             };
 
-            const isValidDate = (dateString) => {
-                const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
-                return regex.test(dateString);
-            };
+            const isValidDate = (dateString) => /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(dateString);
 
             const handleInvoiceSubmit = async (e) => {
                 e.preventDefault();
-
-                // Frontend validation
-                const dateValue = dateInput.value;
-                if (!isValidDate(dateValue)) {
-                    showToast('Invalid date format. Please use MM/dd/yyyy.', true);
-                    return;
-                }
+                if (!isValidDate(dateInput.value)) { return showToast('Invalid date format. Please use MM/dd/yyyy.', true); }
                 
-                generateBtn.textContent = 'Generating...';
-                generateBtn.disabled = true;
-                generateBtn.classList.add('btn-disabled');
-
-                const formData = new FormData(invoiceForm);
-                const vendorData = JSON.parse(formData.get('vendor'));
-                
+                generateBtn.textContent = 'Generating...'; generateBtn.disabled = true;
+                const vendorData = JSON.parse(vendorSelect.value);
                 const invoiceData = {
-                    vendor_name: vendorData.name,
-                    vendor_email: vendorData.email,
-                    date: formData.get('date'),
-                    item: formData.get('item'),
-                    quantity: formData.get('quantity'),
-                    price: formData.get('price'),
-                    notes: formData.get('notes')
+                    vendor_name: vendorData.name, vendor_email: vendorData.email,
+                    date: dateInput.value, item: itemSelect.value, quantity: document.getElementById('quantity').value,
+                    price: priceInput.value, notes: document.getElementById('notes').value
                 };
 
                 try {
@@ -295,10 +356,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(invoiceData),
                     });
-
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to generate invoice.');
-
                     showToast(result.message);
                     invoiceForm.reset();
                     setInitialDate();
@@ -306,9 +365,7 @@
                 } catch (error) {
                     showToast(error.message, true);
                 } finally {
-                    generateBtn.textContent = 'Generate & Send Invoice';
-                    generateBtn.disabled = false;
-                    generateBtn.classList.remove('btn-disabled');
+                    generateBtn.textContent = 'Generate & Send Invoice'; generateBtn.disabled = false;
                 }
             };
 
@@ -324,6 +381,9 @@
                 navInvoiceBtn.addEventListener('click', () => switchView('invoice'));
                 navVendorsBtn.addEventListener('click', () => switchView('vendors'));
                 vendorForm.addEventListener('submit', handleAddVendor);
+                editForm.addEventListener('submit', handleEditVendor);
+                deleteVendorBtn.addEventListener('click', handleDeleteVendor);
+                cancelEditBtn.addEventListener('click', closeEditModal);
                 itemSelect.addEventListener('change', updatePrice);
                 customPriceCheckbox.addEventListener('change', updatePrice);
                 invoiceForm.addEventListener('submit', handleInvoiceSubmit);
