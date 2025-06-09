@@ -123,7 +123,6 @@ def add_invoice_to_sheet(data):
         client = gspread.authorize(creds)
         
         sh = client.open(GOOGLE_SHEET_NAME)
-        # Correctly use the variable for the invoice sheet name
         worksheet = sh.worksheet(GOOGLE_INVOICES_SHEET_NAME)
         
         total = float(data['quantity']) * float(data['price'])
@@ -172,7 +171,7 @@ def create_invoice_pdf(data):
         logo = Image(io.BytesIO(response.content), width=1.5*inch, height=1*inch, kind='bound')
     except Exception as e:
         print(f"Warning: Could not fetch logo from URL. Error: {e}")
-        logo = Paragraph("Your Company", styles['h2'])
+        logo = Paragraph("MALKIT SWEETS AND CATERING", styles['h2'])
 
     header_data = [[logo, Paragraph("INVOICE", styles['CenterAlign'])]]
     header_table = Table(header_data, colWidths=[2*inch, 4.5*inch])
@@ -237,7 +236,7 @@ def send_email_with_attachment(recipient_email, subject, body, file_path):
 # --- API Endpoints ---
 @app.route('/get-vendors', methods=['GET'])
 def get_vendors():
-    """Fetches all vendors from the Google Sheet and standardizes keys to lowercase."""
+    """Fetches all vendors from the Google Sheet and includes their row number."""
     try:
         creds = get_google_creds()
         client = gspread.authorize(creds)
@@ -245,12 +244,17 @@ def get_vendors():
         worksheet = sh.worksheet(GOOGLE_VENDORS_SHEET_NAME)
         records = worksheet.get_all_records()
         
-        standardized_vendors = []
-        for record in records:
+        vendors_with_rows = []
+        for i, record in enumerate(records):
+            # start=2 because sheet rows are 1-indexed and row 1 is the header
+            row_number = i + 2 
             standardized_record = {key.strip().lower(): value for key, value in record.items()}
-            standardized_vendors.append(standardized_record)
+            standardized_record['row_number'] = row_number
+            vendors_with_rows.append(standardized_record)
             
-        return jsonify(standardized_vendors), 200
+        return jsonify(vendors_with_rows), 200
+    except gspread.exceptions.WorksheetNotFound:
+         return jsonify({"error": f"Worksheet '{GOOGLE_VENDORS_SHEET_NAME}' not found. Please check the sheet name."}), 500
     except Exception as e:
         print(f"Error fetching vendors: {e}")
         return jsonify({"error": "Could not fetch vendors from the source."}), 500
@@ -278,6 +282,51 @@ def add_vendor():
     except Exception as e:
         print(f"Error adding vendor: {e}")
         return jsonify({"error": "Could not add vendor."}), 500
+
+@app.route('/edit-vendor', methods=['POST'])
+def edit_vendor():
+    """Edits a vendor's details in the Google Sheet."""
+    try:
+        data = request.get_json()
+        required = ['row_number', 'name', 'email']
+        if not all(k in data for k in required):
+            return jsonify({"error": "Missing required fields for editing."}), 400
+        
+        if not is_valid_email(data['email']):
+            return jsonify({"error": "Invalid email format provided."}), 400
+
+        creds = get_google_creds()
+        client = gspread.authorize(creds)
+        sh = client.open(GOOGLE_SHEET_NAME)
+        worksheet = sh.worksheet(GOOGLE_VENDORS_SHEET_NAME)
+
+        worksheet.update_cell(data['row_number'], 1, data['name'])
+        worksheet.update_cell(data['row_number'], 2, data['email'])
+
+        return jsonify({"message": "Vendor updated successfully."}), 200
+    except Exception as e:
+        print(f"Error editing vendor: {e}")
+        return jsonify({"error": "Could not edit vendor."}), 500
+
+@app.route('/delete-vendor', methods=['POST'])
+def delete_vendor():
+    """Deletes a vendor from the Google Sheet by row number."""
+    try:
+        data = request.get_json()
+        if 'row_number' not in data:
+            return jsonify({"error": "Missing row_number."}), 400
+
+        creds = get_google_creds()
+        client = gspread.authorize(creds)
+        sh = client.open(GOOGLE_SHEET_NAME)
+        worksheet = sh.worksheet(GOOGLE_VENDORS_SHEET_NAME)
+
+        worksheet.delete_rows(data['row_number'])
+
+        return jsonify({"message": "Vendor deleted successfully."}), 200
+    except Exception as e:
+        print(f"Error deleting vendor: {e}")
+        return jsonify({"error": "Could not delete vendor."}), 500
 
 @app.route('/generate-invoice', methods=['POST'])
 def generate_invoice():
