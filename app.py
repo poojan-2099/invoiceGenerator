@@ -50,8 +50,11 @@ CORS(app, resources={
             "https://poojan-2099.github.io",
             "http://localhost:5000",
             "http://127.0.0.1:5000",
-            "https://*.netlify.app",  # Allow all Netlify preview deployments
-            "https://*.netlify.com"    # Allow Netlify production domains
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+            "https://*.netlify.app",
+            "https://*.netlify.com",
+            "null"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
@@ -122,11 +125,43 @@ def create_invoice_pdf(data):
     styles.add(ParagraphStyle(name='CompanyInfo', alignment=TA_RIGHT, leading=14))
     elements = []
     
-    # Header
-    header_data = [[Paragraph("MALKIT SWEETS AND CATERING", styles['h2']), Paragraph("INVOICE", styles['CenterAlign'])]]
-    header_table = Table(header_data, colWidths=[2*inch, 4.5*inch])
-    header_table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
+    # Download logo
+    logo = None
+    try:
+        logo_url = "https://malkitsweetsandcatering.com/img/logo.png"
+        response = requests.get(logo_url)
+        if response.status_code == 200:
+            logo_path = os.path.join('/tmp', 'logo.png')
+            with open(logo_path, 'wb') as f:
+                f.write(response.content)
+            logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+    
+    # Header with logo and company info
+    if logo:
+        # First row: Logo and Invoice title
+        header_data = [
+            [logo, Paragraph("INVOICE", styles['CenterAlign'])]
+        ]
+        header_table = Table(header_data, colWidths=[1.5*inch, 5*inch])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'CENTER')
+        ]))
+    else:
+        header_data = [
+            [Paragraph("INVOICE", styles['CenterAlign'])]
+        ]
+        header_table = Table(header_data, colWidths=[6.5*inch])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'CENTER')
+        ]))
+    
     elements.append(header_table)
+    elements.append(Spacer(1, 0.2*inch))
     
     # Company Info
     company_info_data = [[Paragraph("<b>MALKIT SWEETS AND CATERING</b><br/>18110 Parthenia St<br/> Northridge, CA 91324", styles['Normal']), Paragraph(f"<b>Invoice #:</b> {data['invoice_num']}<br/><b>Date:</b> {datetime.strptime(data['date'], '%m/%d/%Y').strftime('%B %d, %Y')}", styles['CompanyInfo'])]]
@@ -169,6 +204,14 @@ def create_invoice_pdf(data):
     
     # Build PDF with footer
     doc.build(elements, canvasmaker=FooterCanvas)
+    
+    # Clean up temporary logo file
+    try:
+        if os.path.exists(logo_path):
+            os.remove(logo_path)
+    except:
+        pass
+        
     return pdf_path, file_name, grand_total
 
 def upload_to_google_drive(file_path, file_name):
@@ -470,10 +513,18 @@ def save_draft():
             worksheet.update(f'A{data["row_number"]}:I{data["row_number"]}', [draft_data])
             return jsonify({"message": "Draft updated successfully"}), 200
         else:
+            # Check if headers exist by looking at the first row
+            first_row = worksheet.row_values(1)
+            if not first_row:
+                # Add headers only if they don't exist
+                headers = [
+                    "Vendor Name", "Vendor Email", "Date", "Notes", 
+                    "Items", "Vendor Address", "Vendor City", 
+                    "Vendor Phone", "Timestamp"
+                ]
+                worksheet.append_row(headers)
+            
             # Add new draft
-            if not records:
-                # Add headers if sheet is empty
-                worksheet.append_row(["Vendor Name", "Vendor Email", "Date", "Notes", "Items", "Address", "City", "Phone", "Timestamp"])
             worksheet.append_row(draft_data)
             return jsonify({"message": "Draft saved successfully"}), 200
     except Exception as e:
@@ -544,11 +595,55 @@ def generate_invoice():
 def download_draft_preview():
     try:
         data = request.get_json()
-        if not data: return jsonify({"error": "No data provided"}), 400
+        if not data: 
+            return jsonify({"error": "No data provided"}), 400
+            
+        # If we have a row_number, fetch the complete draft data
+        if 'row_number' in data:
+            worksheet, _ = get_sheet_and_records(GOOGLE_DRAFTS_SHEET_NAME)
+            draft_data = worksheet.row_values(data['row_number'])
+            if not draft_data:
+                return jsonify({"error": "Draft not found"}), 404
+                
+            headers = worksheet.row_values(1)
+            draft = {}
+            for i, header in enumerate(headers):
+                key = header.strip().lower().replace(' ', '_')
+                value = draft_data[i] if i < len(draft_data) else ''
+                if key == 'items' and value:
+                    try:
+                        draft[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        draft[key] = []
+                else:
+                    draft[key] = value
+            
+            # Use the fetched draft data
+            data = draft
+        
+        # Generate a temporary invoice number for the preview
         data['invoice_num'] = f"DRAFT-{data.get('row_number', 'PREVIEW')}"
-        pdf_path, pdf_filename, _ = create_invoice_pdf(data)
-        return send_file(pdf_path, as_attachment=True, download_name=pdf_filename)
+        
+        # Create the PDF
+        pdf_path, file_name, _ = create_invoice_pdf(data)
+        
+        # Read the PDF file
+        with open(pdf_path, 'rb') as f:
+            pdf_data = f.read()
+        
+        # Clean up the temporary file
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        
+        # Return the PDF file
+        return send_file(
+            io.BytesIO(pdf_data),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=file_name
+        )
     except Exception as e:
+        print(f"Error in download_draft_preview: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/get-sweets', methods=['GET'])
