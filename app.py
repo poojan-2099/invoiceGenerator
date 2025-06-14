@@ -49,7 +49,9 @@ CORS(app, resources={
         "origins": [
             "https://poojan-2099.github.io",
             "http://localhost:5000",
-            "http://127.0.0.1:5000"
+            "http://127.0.0.1:5000",
+            "https://*.netlify.app",  # Allow all Netlify preview deployments
+            "https://*.netlify.com"    # Allow Netlify production domains
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
