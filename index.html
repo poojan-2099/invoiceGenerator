@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Generator</title>
+    <title>Advanced Invoice Generator</title>
     <link rel="icon" type="image/png" href="https://malkitsweetsandcatering.com/img/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
         .view { display: none; }
         .view.active { display: block; }
         #edit-vendor-modal { display: none; }
@@ -29,6 +31,44 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        .header-container {
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            padding: 1.25rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            background: white;
+            padding: 0.375rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header-text {
+            text-align: left;
+        }
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin: 0;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: #64748B;
+            margin: 0.25rem 0 0;
+            font-weight: 400;
         }
         .list-container {
             max-height: 70vh;
@@ -49,143 +89,6 @@
         .list-container::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        .header-logo {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }
-        @media (max-width: 640px) {
-            .header-logo {
-                width: 40px;
-                height: 40px;
-            }
-            .nav-btn {
-                padding: 0.5rem !important;
-                font-size: 0.875rem !important;
-            }
-            .container {
-                padding: 1rem !important;
-            }
-            .grid-cols-12 {
-                grid-template-columns: repeat(1, 1fr) !important;
-            }
-            .item-row {
-                gap: 0.5rem !important;
-            }
-            .flex-wrap {
-                flex-wrap: wrap;
-            }
-            .space-x-2 > * {
-                margin-left: 0.5rem !important;
-                margin-right: 0.5rem !important;
-            }
-            .p-4 {
-                padding: 0.75rem !important;
-            }
-            .text-2xl {
-                font-size: 1.25rem !important;
-            }
-            .text-4xl {
-                font-size: 1.75rem !important;
-            }
-            .action-btn {
-                padding: 0.5rem 0.75rem !important;
-                font-size: 0.875rem !important;
-                border-radius: 0.5rem !important;
-                transition: all 0.2s ease !important;
-                min-width: auto !important;
-                width: auto !important;
-            }
-            .action-btn:active {
-                transform: scale(0.95) !important;
-            }
-            .download-btn {
-                padding: 0.5rem 0.75rem !important;
-                font-size: 0.875rem !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                border-radius: 0.5rem !important;
-                background-color: #10B981 !important;
-                transition: all 0.2s ease !important;
-                min-width: auto !important;
-                width: auto !important;
-            }
-            .download-btn:active {
-                transform: scale(0.95) !important;
-                background-color: #059669 !important;
-            }
-            .download-btn span {
-                display: inline-block !important;
-            }
-            .download-btn::before {
-                display: none !important;
-            }
-            .item-row {
-                grid-template-columns: 2fr 1fr 1fr 1fr auto !important;
-                gap: 0.5rem !important;
-                padding: 0.5rem !important;
-                background-color: #F9FAFB !important;
-                border-radius: 0.5rem !important;
-                margin-bottom: 0.5rem !important;
-            }
-            .item-total {
-                text-align: right !important;
-                padding-right: 0.5rem !important;
-                font-weight: 600 !important;
-                color: #1F2937 !important;
-            }
-            .tooltip {
-                position: relative !important;
-                display: inline-block !important;
-            }
-            .tooltip .tooltip-text {
-                visibility: hidden !important;
-                width: auto !important;
-                min-width: 100px !important;
-                background-color: #1F2937 !important;
-                color: #fff !important;
-                text-align: center !important;
-                border-radius: 0.375rem !important;
-                padding: 0.5rem 0.75rem !important;
-                position: absolute !important;
-                z-index: 50 !important;
-                bottom: 125% !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                opacity: 0 !important;
-                transition: all 0.2s ease !important;
-                font-size: 0.75rem !important;
-                white-space: nowrap !important;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-            }
-            .tooltip:hover .tooltip-text {
-                visibility: visible !important;
-                opacity: 1 !important;
-                bottom: 130% !important;
-            }
-            .tooltip .tooltip-text::after {
-                content: "" !important;
-                position: absolute !important;
-                top: 100% !important;
-                left: 50% !important;
-                margin-left: -5px !important;
-                border-width: 5px !important;
-                border-style: solid !important;
-                border-color: #1F2937 transparent transparent transparent !important;
-            }
-            .list-item {
-                padding: 0.75rem !important;
-            }
-            .list-item-actions {
-                gap: 0.375rem !important;
-            }
-            .list-item-actions button {
-                padding: 0.375rem 0.75rem !important;
-                font-size: 0.75rem !important;
-            }
-        }
-        /* Base button styles for all views */
         .action-buttons {
             display: flex;
             gap: 1rem;
@@ -288,13 +191,100 @@
         .toggle-status-btn {
             background-color: #6B7280;
         }
-        .button-group {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
+        .item-dropdown {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .item-option:hover {
+            background-color: #f3f4f6;
+        }
+        .main-content {
+            flex: 1;
+        }
+        footer {
+            margin-top: auto;
         }
 
         @media (max-width: 640px) {
+            .header-logo {
+                width: 40px;
+                height: 40px;
+            }
+            .nav-btn {
+                padding: 0.5rem !important;
+                font-size: 0.875rem !important;
+            }
+            .container {
+                padding: 1rem !important;
+            }
+            .grid-cols-12 {
+                grid-template-columns: repeat(1, 1fr) !important;
+            }
+            .item-row {
+                gap: 0.5rem !important;
+            }
+            .flex-wrap {
+                flex-wrap: wrap;
+            }
+            .space-x-2 > * {
+                margin-left: 0.5rem !important;
+                margin-right: 0.5rem !important;
+            }
+            .p-4 {
+                padding: 0.75rem !important;
+            }
+            .text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .text-4xl {
+                font-size: 1.75rem !important;
+            }
+            .action-btn {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                border-radius: 0.5rem !important;
+                transition: all 0.2s ease !important;
+                min-width: auto !important;
+                width: auto !important;
+            }
+            .action-btn:active {
+                transform: scale(0.95) !important;
+            }
+            .download-btn {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 0.5rem !important;
+                background-color: #10B981 !important;
+                transition: all 0.2s ease !important;
+                min-width: auto !important;
+                width: auto !important;
+            }
+            .download-btn:active {
+                transform: scale(0.95) !important;
+                background-color: #059669 !important;
+            }
+            .download-btn span {
+                display: inline-block !important;
+            }
+            .download-btn::before {
+                display: none !important;
+            }
+            .item-row {
+                grid-template-columns: 2fr 1fr 1fr 1fr auto !important;
+                gap: 0.5rem !important;
+                padding: 0.5rem !important;
+                background-color: #F9FAFB !important;
+                border-radius: 0.5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .item-total {
+                text-align: right !important;
+                padding-right: 0.5rem !important;
+                font-weight: 600 !important;
+                color: #1F2937 !important;
+            }
             .invoice-list-item {
                 padding: 0.75rem !important;
                 flex-direction: column !important;
@@ -314,177 +304,188 @@
                 font-size: 0.75rem !important;
             }
         }
-        .item-dropdown {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .item-option:hover {
-            background-color: #f3f4f6;
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-
-    <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-8">
-            <div class="flex items-center justify-center space-x-4 mb-4">
-                <img src="https://malkitsweetsandcatering.com/img/logo.png" alt="Malkit Sweets Logo" class="header-logo">
-                <div class="text-left">
-                    <h1 class="text-4xl font-bold text-gray-900">Malkit Sweets</h1>
-                    <p class="text-gray-600">Invoice Management System</p>
+    <div class="main-content">
+        <header class="header-container">
+            <div class="container mx-auto max-w-6xl px-4">
+                <div class="header-content">
+                    <img src="https://malkitsweetsandcatering.com/img/logo.png" alt="Malkit Sweets Logo" class="header-logo">
+                    <div class="header-text">
+                        <h1 class="header-title">Malkit Sweets</h1>
+                        <p class="header-subtitle">Invoice Management System</p>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <div class="mb-6 bg-white rounded-lg shadow p-2 flex flex-wrap gap-2">
-            <button data-view="create" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-indigo-600 text-white">Create/Edit Invoice</button>
-            <button data-view="drafts" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Drafts</button>
-            <button data-view="invoices" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Sent Invoices</button>
-            <button data-view="vendors" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Vendors</button>
-            <button data-view="items" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Items</button>
-        </div>
-
-        <main>
-            <!-- View 1: Invoice Generator Form -->
-            <div id="view-create" class="view active bg-white p-4 sm:p-8 rounded-xl shadow-lg">
-                <form id="invoice-form">
-                    <input type="hidden" id="draft-row-number">
-                    <h2 id="form-title" class="text-2xl font-bold mb-6">Create New Invoice</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                        <div>
-                            <label for="vendor" class="block text-sm font-medium">Vendor</label>
-                            <select id="vendor" name="vendor" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></select>
-                        </div>
-                        <div>
-                            <label for="date" class="block text-sm font-medium">Date</label>
-                            <input type="text" id="date" name="date" required placeholder="MM/dd/yyyy" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label for="notes" class="block text-sm font-medium">Notes</label>
-                            <textarea id="notes" name="notes" rows="2" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></textarea>
-                        </div>
-                    </div>
-                    <div class="border-t border-b border-gray-200 py-6">
-                        <h3 class="text-lg font-semibold mb-4">Items</h3>
-                        <div id="item-list" class="space-y-4"></div>
-                        <button type="button" id="add-item-btn" class="mt-4 text-indigo-600 font-semibold hover:text-indigo-800">+ Add Item</button>
-                    </div>
-                    <div class="text-right mt-6 text-2xl font-bold">
-                        <span>Grand Total: </span><span id="grand-total">$0.00</span>
-                    </div>
-                    <div class="mt-8 flex flex-wrap justify-between items-center gap-4">
-                        <div class="action-buttons">
-                            <button type="button" id="delete-draft-btn" class="hidden">Delete</button>
-                            <button type="button" id="download-draft-btn" class="hidden">Download</button>
-                            <button type="button" id="save-draft-btn">Save</button>
-                        </div>
-                        <button type="submit" id="generate-btn">Finalize & Send</button>
-                    </div>
-                </form>
+        <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+            <div class="mb-6 bg-white rounded-lg shadow p-2 flex flex-wrap gap-2">
+                <button data-view="create" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-indigo-600 text-white">Create/Edit Invoice</button>
+                <button data-view="drafts" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Drafts</button>
+                <button data-view="invoices" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Sent Invoices</button>
+                <button data-view="vendors" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Vendors</button>
+                <button data-view="items" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Items</button>
             </div>
 
-            <!-- View 2: Drafts List -->
-            <div id="view-drafts" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-bold mb-6">Draft Invoices</h2>
-                <div id="draft-list" class="list-container space-y-3">
-                    <div id="draft-loading" class="loading-spinner hidden"></div>
+            <main>
+                <!-- View 1: Invoice Generator Form -->
+                <div id="view-create" class="view active bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                    <form id="invoice-form">
+                        <input type="hidden" id="draft-row-number">
+                        <h2 id="form-title" class="text-2xl font-bold mb-6">Create New Invoice</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                            <div>
+                                <label for="vendor" class="block text-sm font-medium">Vendor</label>
+                                <select id="vendor" name="vendor" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></select>
+                            </div>
+                            <div>
+                                <label for="date" class="block text-sm font-medium">Date</label>
+                                <input type="text" id="date" name="date" required placeholder="MM/dd/yyyy" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="notes" class="block text-sm font-medium">Notes</label>
+                                <textarea id="notes" name="notes" rows="2" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                        </div>
+                        <div class="border-t border-b border-gray-200 py-6">
+                            <h3 class="text-lg font-semibold mb-4">Items</h3>
+                            <div id="item-list" class="space-y-4"></div>
+                            <button type="button" id="add-item-btn" class="mt-4 text-indigo-600 font-semibold hover:text-indigo-800">+ Add Item</button>
+                        </div>
+                        <div class="text-right mt-6 text-2xl font-bold">
+                            <span>Grand Total: </span><span id="grand-total">$0.00</span>
+                        </div>
+                        <div class="mt-8 flex flex-wrap justify-between items-center gap-4">
+                            <div class="action-buttons">
+                                <button type="button" id="delete-draft-btn" class="hidden">Delete</button>
+                                <button type="button" id="download-draft-btn" class="hidden">Download</button>
+                                <button type="button" id="save-draft-btn">Save</button>
+                            </div>
+                            <button type="submit" id="generate-btn">Finalize & Send</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- View 2: Drafts List -->
+                <div id="view-drafts" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6">Draft Invoices</h2>
+                    <div id="draft-list" class="list-container space-y-3">
+                        <div id="draft-loading" class="loading-spinner hidden"></div>
+                    </div>
+                </div>
+
+                <!-- View 3: Sent Invoices List -->
+                <div id="view-invoices" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6">Sent Invoices</h2>
+                    <div id="invoice-list" class="list-container space-y-3">
+                        <div id="invoice-loading" class="loading-spinner hidden"></div>
+                    </div>
+                </div>
+
+                <!-- View 4: Vendor Management -->
+                <div id="view-vendors" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4">Add a New Vendor</h2>
+                    <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                            <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        </div>
+                        <input type="text" id="vendor-address" placeholder="Street Address" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="vendor-city" placeholder="City" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                            <input type="tel" id="vendor-phone" placeholder="Phone Number" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        </div>
+                        <button type="submit" id="add-vendor-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Vendor</button>
+                    </form>
+
+                    <div id="vendor-list-container">
+                        <h3 class="text-xl font-semibold mb-3">Current Vendor List</h3>
+                        <div id="vendor-list-display" class="list-container space-y-3">
+                            <div id="vendor-loading" class="loading-spinner hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 5: Item Management -->
+                <div id="view-items" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4">Add a New Item</h2>
+                    <form id="item-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="item-name" placeholder="Item Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                            <input type="number" id="item-price" placeholder="Price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        </div>
+                        <button type="submit" id="add-item-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Item</button>
+                    </form>
+
+                    <div id="item-list-container">
+                        <h3 class="text-xl font-semibold mb-3">Current Item List</h3>
+                        <div id="item-list-display" class="list-container space-y-3">
+                            <div id="item-loading" class="loading-spinner hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <div id="toast" class="fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300"></div>
+            
+            <!-- Edit Vendor Modal -->
+            <div id="edit-vendor-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                     <h2 class="text-2xl font-bold mb-6">Edit Vendor</h2>
+                    <form id="edit-vendor-form" class="space-y-4">
+                        <input type="hidden" id="edit-vendor-row">
+                        <div><label class="block text-sm font-medium">Vendor Name</label><input type="text" id="edit-vendor-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div><label class="block text-sm font-medium">Email</label><input type="email" id="edit-vendor-email" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div><label class="block text-sm font-medium">Address</label><input type="text" id="edit-vendor-address" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div><label class="block text-sm font-medium">City</label><input type="text" id="edit-vendor-city" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div><label class="block text-sm font-medium">Phone</label><input type="tel" id="edit-vendor-phone" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div class="flex items-center justify-between pt-4">
+                            <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
+                            <button type="button" id="delete-vendor-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+                            <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- View 3: Sent Invoices List -->
-            <div id="view-invoices" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-bold mb-6">Sent Invoices</h2>
-                <div id="invoice-list" class="list-container space-y-3">
-                    <div id="invoice-loading" class="loading-spinner hidden"></div>
+            <!-- Edit Item Modal -->
+            <div id="edit-item-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                    <h2 class="text-2xl font-bold mb-6">Edit Item</h2>
+                    <form id="edit-item-form" class="space-y-4">
+                        <input type="hidden" id="edit-item-row">
+                        <div><label class="block text-sm font-medium">Item Name</label><input type="text" id="edit-item-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div><label class="block text-sm font-medium">Price</label><input type="number" id="edit-item-price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                        <div class="flex items-center justify-between pt-4">
+                            <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
+                            <button type="button" id="delete-item-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+                            <button type="button" id="cancel-edit-item-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
+                        </div>
+                    </form>
                 </div>
-            </div>
-
-            <!-- View 4: Vendor Management -->
-            <div id="view-vendors" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-bold mb-4">Add a New Vendor</h2>
-                <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                        <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                    </div>
-                    <input type="text" id="vendor-address" placeholder="Street Address" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="vendor-city" placeholder="City" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                        <input type="tel" id="vendor-phone" placeholder="Phone Number" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                    </div>
-                    <button type="submit" id="add-vendor-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Vendor</button>
-                </form>
-
-                <div id="vendor-list-container">
-                    <h3 class="text-xl font-semibold mb-3">Current Vendor List</h3>
-                    <div id="vendor-list-display" class="list-container space-y-3">
-                        <div id="vendor-loading" class="loading-spinner hidden"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View 5: Item Management -->
-            <div id="view-items" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-bold mb-4">Add a New Item</h2>
-                <form id="item-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="item-name" placeholder="Item Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                        <input type="number" id="item-price" placeholder="Price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg">
-                    </div>
-                    <button type="submit" id="add-item-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Item</button>
-                </form>
-
-                <div id="item-list-container">
-                    <h3 class="text-xl font-semibold mb-3">Current Item List</h3>
-                    <div id="item-list-display" class="list-container space-y-3">
-                        <div id="item-loading" class="loading-spinner hidden"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-        
-        <div id="toast" class="fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300"></div>
-        
-        <!-- Edit Vendor Modal -->
-        <div id="edit-vendor-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-                 <h2 class="text-2xl font-bold mb-6">Edit Vendor</h2>
-                <form id="edit-vendor-form" class="space-y-4">
-                    <input type="hidden" id="edit-vendor-row">
-                    <div><label class="block text-sm font-medium">Vendor Name</label><input type="text" id="edit-vendor-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium">Email</label><input type="email" id="edit-vendor-email" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium">Address</label><input type="text" id="edit-vendor-address" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium">City</label><input type="text" id="edit-vendor-city" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium">Phone</label><input type="tel" id="edit-vendor-phone" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div class="flex items-center justify-between pt-4">
-                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
-                        <button type="button" id="delete-vendor-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
-                        <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Edit Item Modal -->
-        <div id="edit-item-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-                <h2 class="text-2xl font-bold mb-6">Edit Item</h2>
-                <form id="edit-item-form" class="space-y-4">
-                    <input type="hidden" id="edit-item-row">
-                    <div><label class="block text-sm font-medium">Item Name</label><input type="text" id="edit-item-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium">Price</label><input type="number" id="edit-item-price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
-                    <div class="flex items-center justify-between pt-4">
-                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
-                        <button type="button" id="delete-item-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
-                        <button type="button" id="cancel-edit-item-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
 
+    <footer class="bg-white border-t border-gray-200">
+        <div class="container mx-auto max-w-6xl px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="https://malkitsweetsandcatering.com/img/logo.png" alt="Malkit Sweets Logo" class="w-8 h-8">
+                    <span class="text-gray-600">© <span id="current-year"></span> Malkit Sweets. All rights reserved.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const BASE_URL = 'https://api.render.com/deploy/srv-d12u3i3e5dus73cq85ig?key=XIjq2svd4jc'; // Replace with production URL
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        const BASE_URL = 'https://api.render.com/deploy/srv-d12u3i3e5dus73cq85ig?key=XIjq2svd4jc'; // Updated port
         const state = { 
             currentDraftRow: null, 
             vendors: [],
@@ -651,6 +652,10 @@
 
             // Show dropdown when clicking the search input
             searchInput.addEventListener('click', () => {
+                // Refresh the dropdown options
+                dropdown.innerHTML = state.items.map(item => 
+                    `<div class="item-option p-2 hover:bg-gray-100 cursor-pointer" data-name="${item.name}" data-price="${item.price}">${item.name}</div>`
+                ).join('');
                 dropdown.classList.remove('hidden');
             });
 
@@ -752,7 +757,7 @@
                 date: dateInput.value,
                 notes: notesInput.value,
                 items: Array.from(document.querySelectorAll('.item-row')).map(row => ({
-                    item: row.querySelector('.item-name').value,
+                    item: row.querySelector('.item-search').value,
                     quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
                     price: parseFloat(row.querySelector('.item-price').value) || 0,
                 }))
@@ -951,20 +956,38 @@
                         el.className = 'invoice-list-item';
                         el.innerHTML = `
                             <div class="invoice-list-content">
-                                <p class="invoice-list-header">Invoice ${inv.invoice_num} to ${inv.vendor_name}</p>
-                                <p class="invoice-list-subheader">Date: ${inv.invoice_date} at ${inv.formatted_time || 'N/A'}, Total: ${inv.total}</p>
+                                <p class="invoice-list-header">Invoice #${inv.invoice_num || 'N/A'} to ${inv.vendor_name}</p>
+                                <p class="invoice-list-subheader">Date: ${inv.invoice_date} at ${inv.formatted_time || 'N/A'}, Total: $${inv.total || '0.00'}</p>
                             </div>
                             <div class="invoice-list-actions">
-                                <span class="status-badge ${statusColor}">${inv.status}</span>
+                                <span class="status-badge ${statusColor}">${inv.status || 'Due'}</span>
                                 <button class="toggle-status-btn">${inv.status === 'Paid' ? 'Mark Due' : 'Mark Paid'}</button>
                             </div>
                         `;
                         
                         el.querySelector('.toggle-status-btn').addEventListener('click', async () => {
                             try {
-                                const result = await apiRequest('/update-status', 'POST', { row_number: inv.row_number });
+                                const newStatus = inv.status === 'Paid' ? 'Due' : 'Paid';
+                                const result = await apiRequest('/update-status', 'POST', { 
+                                    row_number: inv.row_number,
+                                    status: newStatus
+                                });
+                                
+                                // Update UI immediately without reloading
+                                const statusBadge = el.querySelector('.status-badge');
+                                const toggleBtn = el.querySelector('.toggle-status-btn');
+                                
+                                // Update status badge
+                                statusBadge.textContent = newStatus;
+                                statusBadge.className = `status-badge ${newStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`;
+                                
+                                // Update toggle button text based on new status
+                                toggleBtn.textContent = newStatus === 'Paid' ? 'Mark Due' : 'Mark Paid';
+                                
+                                // Update the inv object for future toggles
+                                inv.status = newStatus;
+                                
                                 showToast(result.message);
-                                fetchAndRenderInvoices();
                             } catch (error) {
                                 showToast(error.message, true);
                             }
@@ -1242,7 +1265,7 @@
         };
 
         // Update initialization
-        const initializeApp = () => {
+        const initializeApp = async () => {
             navButtons.forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
             addItemBtn.addEventListener('click', () => createItemRow());
             invoiceForm.addEventListener('submit', handleInvoiceSubmit);
@@ -1258,8 +1281,8 @@
             cancelEditItemBtn.addEventListener('click', closeEditItemModal);
 
             setupInfiniteScroll();
-            fetchAndRenderVendors();
-            fetchAndRenderItems();
+            await fetchAndRenderVendors();
+            await fetchAndRenderItems(); // Load items immediately
             resetInvoiceForm();
         };
 
