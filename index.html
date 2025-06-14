@@ -3,140 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malkit Sweet and Catering Invoice Generator</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Invoice Generator</title>
     <link rel="icon" type="image/png" href="https://malkitsweetsandcatering.com/img/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom Styles -->
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .view { display: none; transition: opacity 0.3s ease-in-out; }
-        .view.active { display: block; opacity: 1; }
-        .btn-disabled { cursor: not-allowed; background-color: #9ca3af; }
+        .view { display: none; }
+        .view.active { display: block; }
+        #edit-vendor-modal { display: none; }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .list-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .list-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .list-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        @media (max-width: 640px) {
+            .header-logo {
+                width: 40px;
+                height: 40px;
+            }
+            .nav-btn {
+                padding: 0.5rem !important;
+                font-size: 0.875rem !important;
+            }
+            .container {
+                padding: 1rem !important;
+            }
+            .grid-cols-12 {
+                grid-template-columns: repeat(1, 1fr) !important;
+            }
+            .item-row {
+                gap: 0.5rem !important;
+            }
+            .flex-wrap {
+                flex-wrap: wrap;
+            }
+            .space-x-2 > * {
+                margin-left: 0.5rem !important;
+                margin-right: 0.5rem !important;
+            }
+            .p-4 {
+                padding: 0.75rem !important;
+            }
+            .text-2xl {
+                font-size: 1.25rem !important;
+            }
+            .text-4xl {
+                font-size: 1.75rem !important;
+            }
+            .action-btn {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                border-radius: 0.5rem !important;
+                transition: all 0.2s ease !important;
+                min-width: auto !important;
+                width: auto !important;
+            }
+            .action-btn:active {
+                transform: scale(0.95) !important;
+            }
+            .download-btn {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 0.5rem !important;
+                background-color: #10B981 !important;
+                transition: all 0.2s ease !important;
+                min-width: auto !important;
+                width: auto !important;
+            }
+            .download-btn:active {
+                transform: scale(0.95) !important;
+                background-color: #059669 !important;
+            }
+            .download-btn span {
+                display: inline-block !important;
+            }
+            .download-btn::before {
+                display: none !important;
+            }
+            .item-row {
+                grid-template-columns: 2fr 1fr 1fr 1fr auto !important;
+                gap: 0.5rem !important;
+                padding: 0.5rem !important;
+                background-color: #F9FAFB !important;
+                border-radius: 0.5rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .item-total {
+                text-align: right !important;
+                padding-right: 0.5rem !important;
+                font-weight: 600 !important;
+                color: #1F2937 !important;
+            }
+            .tooltip {
+                position: relative !important;
+                display: inline-block !important;
+            }
+            .tooltip .tooltip-text {
+                visibility: hidden !important;
+                width: auto !important;
+                min-width: 100px !important;
+                background-color: #1F2937 !important;
+                color: #fff !important;
+                text-align: center !important;
+                border-radius: 0.375rem !important;
+                padding: 0.5rem 0.75rem !important;
+                position: absolute !important;
+                z-index: 50 !important;
+                bottom: 125% !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                opacity: 0 !important;
+                transition: all 0.2s ease !important;
+                font-size: 0.75rem !important;
+                white-space: nowrap !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            }
+            .tooltip:hover .tooltip-text {
+                visibility: visible !important;
+                opacity: 1 !important;
+                bottom: 130% !important;
+            }
+            .tooltip .tooltip-text::after {
+                content: "" !important;
+                position: absolute !important;
+                top: 100% !important;
+                left: 50% !important;
+                margin-left: -5px !important;
+                border-width: 5px !important;
+                border-style: solid !important;
+                border-color: #1F2937 transparent transparent transparent !important;
+            }
+            .list-item {
+                padding: 0.75rem !important;
+            }
+            .list-item-actions {
+                gap: 0.375rem !important;
+            }
+            .list-item-actions button {
+                padding: 0.375rem 0.75rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+        /* Base button styles for all views */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        .action-buttons button {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        #delete-draft-btn {
+            background-color: #EF4444;
+            color: white;
+        }
+        #download-draft-btn {
+            background-color: #10B981;
+            color: white;
+        }
+        #save-draft-btn {
+            background-color: #6B7280;
+            color: white;
+        }
+        #generate-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background-color: #4F46E5;
+            color: white;
+            border-radius: 0.375rem;
+        }
+        .action-buttons button:hover {
+            opacity: 0.9;
+        }
+        .invoice-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #F9FAFB;
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease;
+        }
+        .invoice-list-item:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
+        }
+        .invoice-list-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            max-width: 60%;
+        }
+        .invoice-list-header {
+            font-weight: 600;
+            color: #1F2937;
+            margin: 0;
+            font-size: 1rem;
+        }
+        .invoice-list-subheader {
+            font-size: 0.875rem;
+            color: #6B7280;
+            margin: 0;
+        }
+        .invoice-list-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            min-width: fit-content;
+        }
+        .invoice-list-actions button {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            color: white;
+            white-space: nowrap;
+        }
+        .invoice-list-actions button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .download-btn {
+            background-color: #10B981;
+        }
+        .edit-draft-btn {
+            background-color: #3B82F6;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .toggle-status-btn {
+            background-color: #6B7280;
+        }
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        @media (max-width: 640px) {
+            .invoice-list-item {
+                padding: 0.75rem !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 0.75rem !important;
+            }
+            .invoice-list-content {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .invoice-list-actions {
+                width: 100% !important;
+                justify-content: flex-start !important;
+            }
+            .invoice-list-actions button {
+                padding: 0.375rem 0.75rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+        .item-dropdown {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .item-option:hover {
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <div class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
         <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900">Invoice Generator</h1>
-            <p class="text-gray-600 mt-2">Create and send professional invoices in seconds.</p>
+            <div class="flex items-center justify-center space-x-4 mb-4">
+                <img src="https://malkitsweetsandcatering.com/img/logo.png" alt="Malkit Sweets Logo" class="header-logo">
+                <div class="text-left">
+                    <h1 class="text-4xl font-bold text-gray-900">Malkit Sweets</h1>
+                    <p class="text-gray-600">Invoice Management System</p>
+                </div>
+            </div>
         </header>
 
-        <div class="mb-6 bg-white rounded-lg shadow p-2 flex space-x-2">
-            <button id="nav-invoice" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-indigo-600 text-white">Create Invoice</button>
-            <button id="nav-vendors" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Manage Vendors</button>
+        <div class="mb-6 bg-white rounded-lg shadow p-2 flex flex-wrap gap-2">
+            <button data-view="create" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-indigo-600 text-white">Create/Edit Invoice</button>
+            <button data-view="drafts" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Drafts</button>
+            <button data-view="invoices" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Sent Invoices</button>
+            <button data-view="vendors" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Vendors</button>
+            <button data-view="items" class="nav-btn flex-1 py-2 px-4 rounded-md text-center font-medium bg-gray-200 text-gray-700">Items</button>
         </div>
 
         <main>
-            <!-- View 1: Invoice Generator -->
-            <div id="view-invoice" class="view active bg-white p-8 rounded-xl shadow-lg">
+            <!-- View 1: Invoice Generator Form -->
+            <div id="view-create" class="view active bg-white p-4 sm:p-8 rounded-xl shadow-lg">
                 <form id="invoice-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="hidden" id="draft-row-number">
+                    <h2 id="form-title" class="text-2xl font-bold mb-6">Create New Invoice</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
                         <div>
-                            <label for="vendor" class="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
-                            <select id="vendor" name="vendor" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <!-- Populated by JS -->
-                            </select>
+                            <label for="vendor" class="block text-sm font-medium">Vendor</label>
+                            <select id="vendor" name="vendor" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></select>
                         </div>
-                        
                         <div>
-                            <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                            <input type="text" id="date" name="date" required placeholder="MM/dd/yyyy" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <label for="date" class="block text-sm font-medium">Date</label>
+                            <input type="text" id="date" name="date" required placeholder="MM/dd/yyyy" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg">
                         </div>
-
-                        <div>
-                            <label for="item" class="block text-sm font-medium text-gray-700 mb-1">Item (Indian Sweets)</label>
-                            <select id="item" name="item" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="" disabled selected>Select a sweet</option>
-                                <option value="Jalebi">Jalebi</option>
-                                <option value="Ladoo">Ladoo</option>
-                                <option value="Barfi">Barfi</option>
-                                <option value="Gulab Jamun">Gulab Jamun</option>
-                                <option value="Rasgulla">Rasgulla</option>
-                                <option value="Kaju Katli">Kaju Katli</option>
-                                <option value="Mysore Pak">Mysore Pak</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (lbs)</label>
-                            <input type="number" id="quantity" name="quantity" min="1" required placeholder="e.g., 5" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-
                         <div class="md:col-span-2">
-                             <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price per unit (USD)</label>
-                             <div class="flex items-center">
-                                <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="e.g., 15.50" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <div class="flex items-center pl-4">
-                                     <input id="custom-price-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                                     <label for="custom-price-checkbox" class="ml-2 block text-sm text-gray-900">Use Custom Price</label>
-                                 </div>
-                             </div>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea id="notes" name="notes" rows="4" placeholder="Any additional details..." class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            <label for="notes" class="block text-sm font-medium">Notes</label>
+                            <textarea id="notes" name="notes" rows="2" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg"></textarea>
                         </div>
                     </div>
-                    
-                    <div class="mt-8 text-right">
-                        <button id="generate-btn" type="submit" class="w-full md:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            Generate & Send Invoice
-                        </button>
+                    <div class="border-t border-b border-gray-200 py-6">
+                        <h3 class="text-lg font-semibold mb-4">Items</h3>
+                        <div id="item-list" class="space-y-4"></div>
+                        <button type="button" id="add-item-btn" class="mt-4 text-indigo-600 font-semibold hover:text-indigo-800">+ Add Item</button>
+                    </div>
+                    <div class="text-right mt-6 text-2xl font-bold">
+                        <span>Grand Total: </span><span id="grand-total">$0.00</span>
+                    </div>
+                    <div class="mt-8 flex flex-wrap justify-between items-center gap-4">
+                        <div class="action-buttons">
+                            <button type="button" id="delete-draft-btn" class="hidden">Delete</button>
+                            <button type="button" id="download-draft-btn" class="hidden">Download</button>
+                            <button type="button" id="save-draft-btn">Save</button>
+                        </div>
+                        <button type="submit" id="generate-btn">Finalize & Send</button>
                     </div>
                 </form>
             </div>
 
-            <!-- View 2: Vendor Management -->
-            <div id="view-vendors" class="view bg-white p-8 rounded-xl shadow-lg">
+            <!-- View 2: Drafts List -->
+            <div id="view-drafts" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6">Draft Invoices</h2>
+                <div id="draft-list" class="list-container space-y-3">
+                    <div id="draft-loading" class="loading-spinner hidden"></div>
+                </div>
+            </div>
+
+            <!-- View 3: Sent Invoices List -->
+            <div id="view-invoices" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6">Sent Invoices</h2>
+                <div id="invoice-list" class="list-container space-y-3">
+                    <div id="invoice-loading" class="loading-spinner hidden"></div>
+                </div>
+            </div>
+
+            <!-- View 4: Vendor Management -->
+            <div id="view-vendors" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
                 <h2 class="text-2xl font-bold mb-4">Add a New Vendor</h2>
-                <p class="text-gray-600 mb-6">Vendors added here will be available in the invoice form</p>
-                <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200">
+                <form id="vendor-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="vendor-name" placeholder="Vendor Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        <input type="email" id="vendor-email" placeholder="Vendor Email" required class="w-full p-3 bg-gray-50 border rounded-lg">
                     </div>
-                    <button type="submit" id="add-vendor-btn" class="mt-4 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">Add Vendor</button>
+                    <input type="text" id="vendor-address" placeholder="Street Address" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="vendor-city" placeholder="City" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        <input type="tel" id="vendor-phone" placeholder="Phone Number" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                    </div>
+                    <button type="submit" id="add-vendor-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Vendor</button>
                 </form>
 
-                <!-- Vendor List Display -->
                 <div id="vendor-list-container">
                     <h3 class="text-xl font-semibold mb-3">Current Vendor List</h3>
-                    <div id="vendor-list-display" class="space-y-3">
-                        <!-- Vendor list from Google Sheet will be displayed here -->
+                    <div id="vendor-list-display" class="list-container space-y-3">
+                        <div id="vendor-loading" class="loading-spinner hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 5: Item Management -->
+            <div id="view-items" class="view bg-white p-4 sm:p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-4">Add a New Item</h2>
+                <form id="item-form" class="mb-6 pb-6 border-b border-gray-200 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="item-name" placeholder="Item Name" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                        <input type="number" id="item-price" placeholder="Price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg">
+                    </div>
+                    <button type="submit" id="add-item-btn" class="mt-2 w-full md:w-auto bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700">Add Item</button>
+                </form>
+
+                <div id="item-list-container">
+                    <h3 class="text-xl font-semibold mb-3">Current Item List</h3>
+                    <div id="item-list-display" class="list-container space-y-3">
+                        <div id="item-loading" class="loading-spinner hidden"></div>
                     </div>
                 </div>
             </div>
         </main>
         
-        <div id="toast" class="fixed top-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300">
-            <span id="toast-message"></span>
-        </div>
-
+        <div id="toast" class="fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300"></div>
+        
         <!-- Edit Vendor Modal -->
         <div id="edit-vendor-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
             <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
-                <h2 class="text-2xl font-bold mb-6">Edit Vendor</h2>
-                <form id="edit-vendor-form">
+                 <h2 class="text-2xl font-bold mb-6">Edit Vendor</h2>
+                <form id="edit-vendor-form" class="space-y-4">
                     <input type="hidden" id="edit-vendor-row">
-                    <div class="mb-4">
-                        <label for="edit-vendor-name" class="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
-                        <input type="text" id="edit-vendor-name" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <div><label class="block text-sm font-medium">Vendor Name</label><input type="text" id="edit-vendor-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium">Email</label><input type="email" id="edit-vendor-email" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium">Address</label><input type="text" id="edit-vendor-address" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium">City</label><input type="text" id="edit-vendor-city" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium">Phone</label><input type="tel" id="edit-vendor-phone" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div class="flex items-center justify-between pt-4">
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
+                        <button type="button" id="delete-vendor-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+                        <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
                     </div>
-                    <div class="mb-6">
-                        <label for="edit-vendor-email" class="block text-sm font-medium text-gray-700 mb-1">Vendor Email</label>
-                        <input type="email" id="edit-vendor-email" required class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors">Save Changes</button>
-                        <button type="button" id="delete-vendor-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition-colors">Delete</button>
-                        <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Item Modal -->
+        <div id="edit-item-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-6">Edit Item</h2>
+                <form id="edit-item-form" class="space-y-4">
+                    <input type="hidden" id="edit-item-row">
+                    <div><label class="block text-sm font-medium">Item Name</label><input type="text" id="edit-item-name" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium">Price</label><input type="number" id="edit-item-price" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border rounded-lg"></div>
+                    <div class="flex items-center justify-between pt-4">
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg">Save</button>
+                        <button type="button" id="delete-item-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete</button>
+                        <button type="button" id="cancel-edit-item-btn" class="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -144,258 +483,824 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const navInvoiceBtn = document.getElementById('nav-invoice');
-            const navVendorsBtn = document.getElementById('nav-vendors');
-            const viewInvoice = document.getElementById('view-invoice');
-            const viewVendors = document.getElementById('view-vendors');
-            const invoiceForm = document.getElementById('invoice-form');
-            const generateBtn = document.getElementById('generate-btn');
-            const vendorForm = document.getElementById('vendor-form');
-            const vendorSelect = document.getElementById('vendor');
-            const vendorListDisplay = document.getElementById('vendor-list-display'); 
-            const itemSelect = document.getElementById('item');
-            const priceInput = document.getElementById('price');
-            const customPriceCheckbox = document.getElementById('custom-price-checkbox');
-            const dateInput = document.getElementById('date');
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
+    document.addEventListener('DOMContentLoaded', () => {
+        const BASE_URL = 'https://api.render.com/deploy/srv-d12u3i3e5dus73cq85ig?key=XIjq2svd4jc'; // Replace with production URL
+        const state = { 
+            currentDraftRow: null, 
+            vendors: [],
+            items: [],
+            isLoading: {
+                drafts: false,
+                invoices: false,
+                vendors: false,
+                items: false
+            },
+            currentPage: {
+                drafts: 1,
+                invoices: 1,
+                vendors: 1,
+                items: 1
+            },
+            hasMore: {
+                drafts: true,
+                invoices: true,
+                vendors: true,
+                items: true
+            }
+        };
+        
+        // DOM Elements
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.view');
+        const toast = document.getElementById('toast');
+        const invoiceForm = document.getElementById('invoice-form');
+        const formTitle = document.getElementById('form-title');
+        const draftRowInput = document.getElementById('draft-row-number');
+        const vendorSelect = document.getElementById('vendor');
+        const dateInput = document.getElementById('date');
+        const notesInput = document.getElementById('notes');
+        const itemListDiv = document.getElementById('item-list');
+        const grandTotalSpan = document.getElementById('grand-total');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const saveDraftBtn = document.getElementById('save-draft-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const formDeleteBtn = document.getElementById('delete-draft-btn');
+        const draftListDiv = document.getElementById('draft-list');
+        const invoiceListDiv = document.getElementById('invoice-list');
+        const vendorForm = document.getElementById('vendor-form');
+        const vendorListDisplay = document.getElementById('vendor-list-display');
+        const editModal = document.getElementById('edit-vendor-modal');
+        const editForm = document.getElementById('edit-vendor-form');
+        const deleteVendorBtn = document.getElementById('delete-vendor-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const editVendorNameInput = document.getElementById('edit-vendor-name');
+        const editVendorEmailInput = document.getElementById('edit-vendor-email');
+        const editVendorAddressInput = document.getElementById('edit-vendor-address');
+        const editVendorCityInput = document.getElementById('edit-vendor-city');
+        const editVendorPhoneInput = document.getElementById('edit-vendor-phone');
+        const editVendorRowInput = document.getElementById('edit-vendor-row');
+        const itemForm = document.getElementById('item-form');
+        const itemListDisplay = document.getElementById('item-list-display');
+        const editItemModal = document.getElementById('edit-item-modal');
+        const editItemForm = document.getElementById('edit-item-form');
+        const deleteItemBtn = document.getElementById('delete-item-btn');
+        const cancelEditItemBtn = document.getElementById('cancel-edit-item-btn');
+
+        const indianSweets = { 'Jalebi': 12.00, 'Ladoo': 18.50, 'Barfi': 22.00, 'Gulab Jamun': 15.00, 'Rasgulla': 14.00, 'Kaju Katli': 30.00, 'Mysore Pak': 20.00 };
+
+        // --- Helper Functions ---
+        const showToast = (message, isError = false) => {
+            toast.textContent = message;
+            toast.className = `fixed top-5 right-5 py-2 px-4 rounded-lg shadow-lg transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-gray-800'} text-white`;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 3000);
+        };
+
+        const apiRequest = async (endpoint, method = 'GET', body = null) => {
+            const options = { method, headers: { 'Content-Type': 'application/json' }};
+            if (body) options.body = JSON.stringify(body);
+            const response = await fetch(`${BASE_URL}${endpoint}`, options);
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || `Request failed`);
+            return result;
+        };
+
+        // --- View & State Management ---
+        const switchView = (viewId) => {
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            navButtons.forEach(btn => {
+                btn.classList.toggle('bg-indigo-600', btn.dataset.view === viewId);
+                btn.classList.toggle('text-white', btn.dataset.view === viewId);
+                btn.classList.toggle('bg-gray-200', btn.dataset.view !== viewId);
+                btn.classList.toggle('text-gray-700', btn.dataset.view !== viewId);
+            });
+            if (viewId === 'create' && !state.currentDraftRow) {
+                resetInvoiceForm();
+            }
+            if (viewId === 'drafts') fetchAndRenderDrafts();
+            if (viewId === 'invoices') fetchAndRenderInvoices();
+            if (viewId === 'vendors') fetchAndRenderVendors();
+            if (viewId === 'items') fetchAndRenderItems();
+        };
+
+        const resetInvoiceForm = () => {
+            invoiceForm.reset();
+            state.currentDraftRow = null;
+            draftRowInput.value = '';
+            formTitle.textContent = 'Create New Invoice';
+            formDeleteBtn.classList.add('hidden');
+            document.getElementById('download-draft-btn').classList.add('hidden');
+            itemListDiv.innerHTML = '';
+            createItemRow();
+            setInitialDate();
+        };
+        
+        // --- Invoice Form Logic ---
+        const calculateGrandTotal = () => {
+            let total = 0;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                total += quantity * price;
+            });
+            grandTotalSpan.textContent = `$${total.toFixed(2)}`;
+        };
+
+        const createItemRow = (itemData = {}) => {
+            const row = document.createElement('div');
+            row.className = 'item-row grid grid-cols-12 gap-x-4 items-center';
             
-            // Edit Modal Elements
-            const editModal = document.getElementById('edit-vendor-modal');
-            const editForm = document.getElementById('edit-vendor-form');
-            const editVendorRowInput = document.getElementById('edit-vendor-row');
-            const editVendorNameInput = document.getElementById('edit-vendor-name');
-            const editVendorEmailInput = document.getElementById('edit-vendor-email');
-            const deleteVendorBtn = document.getElementById('delete-vendor-btn');
-            const cancelEditBtn = document.getElementById('cancel-edit-btn');
-
-            const BASE_URL = 'https://invoicegenerator-wine.onrender.com'; // Replace with your production URL when deployed
-
-            const predefinedPrices = {
-                'Jalebi': 12.00, 'Ladoo': 18.50, 'Barfi': 22.00,
-                'Gulab Jamun': 15.00, 'Rasgulla': 14.00, 'Kaju Katli': 30.00, 'Mysore Pak': 20.00
-            };
-
-            const showToast = (message, isError = false) => {
-                toastMessage.textContent = message;
-                toast.className = toast.className.replace(/bg-gray-800|bg-red-600/g, '');
-                toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-800');
-                toast.classList.remove('opacity-0');
-                setTimeout(() => toast.classList.add('opacity-0'), 3000);
-            };
-
-            const switchView = (viewToShow) => {
-                [viewInvoice, viewVendors].forEach(view => view.classList.remove('active'));
-                [navInvoiceBtn, navVendorsBtn].forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
-
-                if (viewToShow === 'invoice') {
-                    viewInvoice.classList.add('active');
-                    navInvoiceBtn.classList.add('bg-indigo-600', 'text-white');
-                } else {
-                    viewVendors.classList.add('active');
-                    navVendorsBtn.classList.add('bg-indigo-600', 'text-white');
-                }
-            };
-
-            const openEditModal = (vendor) => {
-                editVendorRowInput.value = vendor.row_number;
-                editVendorNameInput.value = vendor.name;
-                editVendorEmailInput.value = vendor.email;
-                editModal.classList.remove('hidden');
-            };
-
-            const closeEditModal = () => {
-                editModal.classList.add('hidden');
-            };
-
-            const fetchAndRenderVendors = async () => {
-                try {
-                    const response = await fetch(`${BASE_URL}/get-vendors`);
-                    if (!response.ok) throw new Error('Failed to fetch vendors.');
-                    
-                    const vendors = await response.json();
-                    
-                    vendorSelect.innerHTML = ''; 
-                    vendorListDisplay.innerHTML = '';
-
-                    if (vendors.length > 0) {
-                        vendors.forEach(vendor => {
-                            const option = document.createElement('option');
-                            option.value = JSON.stringify({ name: vendor.name, email: vendor.email });
-                            option.textContent = vendor.name;
-                            vendorSelect.appendChild(option);
-
-                            const vendorEl = document.createElement('div');
-                            vendorEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
-                            vendorEl.innerHTML = `
-                                <div>
-                                    <p class="font-semibold">${vendor.name}</p>
-                                    <p class="text-sm text-gray-500">${vendor.email}</p>
-                                </div>
-                                <button class="edit-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded hover:bg-blue-600">Edit</button>
-                            `;
-                            vendorEl.querySelector('.edit-btn').addEventListener('click', () => openEditModal(vendor));
-                            vendorListDisplay.appendChild(vendorEl);
-                        });
-                    } else {
-                        const option = document.createElement('option');
-                        option.textContent = 'No vendors found. Please add one.';
-                        option.disabled = true;
-                        vendorSelect.appendChild(option);
-                        vendorListDisplay.innerHTML = `<p class="text-gray-500">No vendors found in your Google Sheet.</p>`;
-                    }
-                } catch (error) {
-                    showToast(error.message, true);
-                    vendorSelect.innerHTML = '<option disabled>Error loading vendors</option>';
-                    vendorListDisplay.innerHTML = `<p class="text-red-500">Could not load vendors.</p>`;
-                }
-            };
+            // Create item options from state.items
+            const itemOptions = state.items.map(item => 
+                `<div class="item-option p-2 hover:bg-gray-100 cursor-pointer" data-name="${item.name}" data-price="${item.price}">${item.name}</div>`
+            ).join('');
             
-            const handleAddVendor = async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('add-vendor-btn');
-                const name = document.getElementById('vendor-name').value.trim();
-                const email = document.getElementById('vendor-email').value.trim();
-
-                if (!name || !email) { return showToast('Please provide both name and email.', true); }
-
-                btn.textContent = 'Adding...'; btn.disabled = true;
-                try {
-                    const response = await fetch(`${BASE_URL}/add-vendor`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, email }),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || 'Failed to add vendor.');
-                    showToast(result.message);
-                    vendorForm.reset();
-                    await fetchAndRenderVendors();
-                    switchView('invoice');
-                } catch (error) {
-                    showToast(error.message, true);
-                } finally {
-                    btn.textContent = 'Add Vendor to Sheet'; btn.disabled = false;
-                }
-            };
+            row.innerHTML = `
+                <div class="col-span-5 relative">
+                    <input type="text" class="item-search w-full p-2 border rounded" 
+                           placeholder="Search items..." value="${itemData.item || ''}">
+                    <div class="item-dropdown absolute w-full bg-white border rounded mt-1 max-h-48 overflow-y-auto z-10 hidden">
+                        ${itemOptions}
+                    </div>
+                </div>
+                <div class="col-span-2">
+                    <input type="number" class="item-quantity w-full p-2 border rounded" 
+                           value="${itemData.quantity || 1}" min="1">
+                </div>
+                <div class="col-span-2">
+                    <input type="number" class="item-price w-full p-2 border rounded" 
+                           value="${itemData.price || ''}" step="0.01" min="0">
+                </div>
+                <div class="col-span-2 text-right font-medium item-total">$0.00</div>
+                <div class="col-span-1">
+                    <button type="button" class="remove-item-btn text-red-500 hover:text-red-700">✖</button>
+                </div>
+            `;
             
-            const handleEditVendor = async (e) => {
-                e.preventDefault();
-                const vendorData = {
-                    row_number: parseInt(editVendorRowInput.value, 10),
-                    name: editVendorNameInput.value.trim(),
-                    email: editVendorEmailInput.value.trim()
-                };
-
-                try {
-                    const response = await fetch(`${BASE_URL}/edit-vendor`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(vendorData),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || 'Failed to update vendor.');
-                    showToast(result.message);
-                    closeEditModal();
-                    await fetchAndRenderVendors();
-                } catch (error) {
-                    showToast(error.message, true);
-                }
+            const searchInput = row.querySelector('.item-search');
+            const dropdown = row.querySelector('.item-dropdown');
+            const qtyInput = row.querySelector('.item-quantity');
+            const priceInput = row.querySelector('.item-price');
+            
+            const updateRow = () => {
+                const total = (parseFloat(priceInput.value) || 0) * (parseInt(qtyInput.value) || 0);
+                row.querySelector('.item-total').textContent = `$${total.toFixed(2)}`;
+                calculateGrandTotal();
             };
 
-            const handleDeleteVendor = async () => {
-                if (!confirm('Are you sure you want to delete this vendor? This cannot be undone.')) {
-                    return;
-                }
-                const row_number = parseInt(editVendorRowInput.value, 10);
-                try {
-                    const response = await fetch(`${BASE_URL}/delete-vendor`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ row_number }),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || 'Failed to delete vendor.');
-                    showToast(result.message);
-                    closeEditModal();
-                    await fetchAndRenderVendors();
-                } catch (error) {
-                    showToast(error.message, true);
-                }
-            };
+            // Show dropdown when clicking the search input
+            searchInput.addEventListener('click', () => {
+                dropdown.classList.remove('hidden');
+            });
 
-            const updatePrice = () => {
-                if (customPriceCheckbox.checked) {
-                    priceInput.readOnly = false;
-                    priceInput.classList.remove('bg-gray-200');
-                } else {
-                    priceInput.readOnly = true;
-                    priceInput.classList.add('bg-gray-200');
-                    priceInput.value = predefinedPrices[itemSelect.value] || '';
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!row.contains(e.target)) {
+                    dropdown.classList.add('hidden');
                 }
-            };
+            });
 
-            const isValidDate = (dateString) => /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(dateString);
-
-            const handleInvoiceSubmit = async (e) => {
-                e.preventDefault();
-                if (!isValidDate(dateInput.value)) { return showToast('Invalid date format. Please use MM/dd/yyyy.', true); }
+            // Filter items as you type
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const options = dropdown.querySelectorAll('.item-option');
                 
-                generateBtn.textContent = 'Generating...'; generateBtn.disabled = true;
-                const vendorData = JSON.parse(vendorSelect.value);
-                const invoiceData = {
-                    vendor_name: vendorData.name, vendor_email: vendorData.email,
-                    date: dateInput.value, item: itemSelect.value, quantity: document.getElementById('quantity').value,
-                    price: priceInput.value, notes: document.getElementById('notes').value
-                };
+                options.forEach(option => {
+                    const text = option.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+                
+                dropdown.classList.remove('hidden');
+            });
 
-                try {
-                    const response = await fetch(`${BASE_URL}/generate-invoice`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(invoiceData),
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || 'Failed to generate invoice.');
-                    showToast(result.message);
-                    invoiceForm.reset();
-                    setInitialDate();
-                    updatePrice();
-                } catch (error) {
-                    showToast(error.message, true);
-                } finally {
-                    generateBtn.textContent = 'Generate & Send Invoice'; generateBtn.disabled = false;
+            // Handle Enter key press
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const searchTerm = searchInput.value.toLowerCase();
+                    const visibleOptions = Array.from(dropdown.querySelectorAll('.item-option'))
+                        .filter(option => option.style.display !== 'none');
+                    
+                    if (visibleOptions.length > 0) {
+                        const firstMatch = visibleOptions[0];
+                        const name = firstMatch.dataset.name;
+                        const price = firstMatch.dataset.price;
+                        searchInput.value = name;
+                        priceInput.value = price;
+                        dropdown.classList.add('hidden');
+                        updateRow();
+                    }
                 }
+            });
+
+            // Handle item selection
+            dropdown.querySelectorAll('.item-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const name = option.dataset.name;
+                    const price = option.dataset.price;
+                    searchInput.value = name;
+                    priceInput.value = price;
+                    dropdown.classList.add('hidden');
+                    updateRow();
+                });
+            });
+            
+            qtyInput.addEventListener('input', updateRow);
+            priceInput.addEventListener('input', updateRow);
+            row.querySelector('.remove-item-btn').addEventListener('click', () => {
+                row.remove();
+                calculateGrandTotal();
+            });
+
+            itemListDiv.appendChild(row);
+            if(!itemData.price && searchInput.value) {
+                const selectedItem = state.items.find(item => item.name === searchInput.value);
+                if (selectedItem) {
+                    priceInput.value = selectedItem.price;
+                }
+            }
+            updateRow();
+            return row;
+        };
+
+        // Add some custom styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .item-dropdown {
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .item-option:hover {
+                background-color: #f3f4f6;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const gatherFormData = () => {
+            const vendorData = JSON.parse(vendorSelect.value);
+            return {
+                row_number: state.currentDraftRow,
+                vendor_name: vendorData.name,
+                vendor_email: vendorData.email,
+                vendor_address: vendorData.address,
+                vendor_city: vendorData.city,
+                vendor_phone: vendorData.phone,
+                date: dateInput.value,
+                notes: notesInput.value,
+                items: Array.from(document.querySelectorAll('.item-row')).map(row => ({
+                    item: row.querySelector('.item-name').value,
+                    quantity: parseFloat(row.querySelector('.item-quantity').value) || 0,
+                    price: parseFloat(row.querySelector('.item-price').value) || 0,
+                }))
             };
+        };
 
-            const setInitialDate = () => {
-                const today = new Date();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const year = today.getFullYear();
-                dateInput.value = `${month}/${day}/${year}`;
+        const loadDraftIntoForm = async (draft) => {
+            try {
+                // Fetch the complete draft data
+                const completeDraft = await apiRequest(`/get-draft/${draft.row_number}`);
+                
+                // Clear form but preserve draft state
+                invoiceForm.reset();
+                state.currentDraftRow = completeDraft.row_number;
+                draftRowInput.value = completeDraft.row_number;
+                formTitle.textContent = `Editing Draft`;
+                formDeleteBtn.classList.remove('hidden');
+                document.getElementById('download-draft-btn').classList.remove('hidden');
+
+                // Find and set the vendor
+                const vendorValue = state.vendors.find(v => v.name === completeDraft.vendor_name && v.email === completeDraft.vendor_email);
+                if(vendorValue) {
+                    vendorSelect.value = JSON.stringify(vendorValue);
+                }
+
+                // Set other form fields
+                dateInput.value = completeDraft.date || '';
+                notesInput.value = completeDraft.notes || '';
+                
+                // Clear and recreate item rows
+                itemListDiv.innerHTML = '';
+                if (completeDraft.items && completeDraft.items.length > 0) {
+                    completeDraft.items.forEach(item => {
+                        const row = createItemRow(item);
+                        // Ensure the price is set correctly
+                        const priceInput = row.querySelector('.item-price');
+                        const nameSelect = row.querySelector('.item-name');
+                        if (item.price) {
+                            priceInput.value = item.price;
+                        } else if (nameSelect.value) {
+                            priceInput.value = indianSweets[nameSelect.value] || 0;
+                        }
+                    });
+                } else {
+                    createItemRow();
+                }
+                
+                // Switch to create view
+                switchView('create');
+                
+                // Recalculate total
+                calculateGrandTotal();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        };
+
+        // --- Data Fetching & Rendering ---
+        const showLoading = (type) => {
+            const loadingElement = document.getElementById(`${type}-loading`);
+            if (loadingElement) {
+                loadingElement.classList.remove('hidden');
+                state.isLoading[type] = true;
+            }
+        };
+
+        const hideLoading = (type) => {
+            const loadingElement = document.getElementById(`${type}-loading`);
+            if (loadingElement) {
+                loadingElement.classList.add('hidden');
+                state.isLoading[type] = false;
+            }
+        };
+
+        const fetchAndRenderVendors = async () => {
+            try {
+                showLoading('vendor');
+                state.vendors = await apiRequest('/get-vendors');
+                vendorSelect.innerHTML = '';
+                vendorListDisplay.innerHTML = '<div id="vendor-loading" class="loading-spinner hidden"></div>';
+                
+                if (state.vendors.length > 0) {
+                    state.vendors.forEach(vendor => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(vendor); 
+                        option.textContent = vendor.name;
+                        vendorSelect.appendChild(option);
+
+                        const vendorEl = document.createElement('div');
+                        vendorEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
+                        vendorEl.innerHTML = `<div><p class="font-semibold">${vendor.name}</p><p class="text-sm text-gray-500">${vendor.phone || ''} - ${vendor.city || ''}</p></div><button class="edit-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded">Edit</button>`;
+                        vendorEl.querySelector('.edit-btn').addEventListener('click', () => openEditModal(vendor));
+                        vendorListDisplay.appendChild(vendorEl);
+                    });
+                } else {
+                    vendorSelect.innerHTML = '<option disabled>No vendors found</option>';
+                    vendorListDisplay.innerHTML = '<p>No vendors found. Add one below.</p>';
+                }
+            } catch(error) {
+                showToast(error.message, true);
+            } finally {
+                hideLoading('vendor');
+            }
+        };
+
+        const fetchAndRenderDrafts = async (isLoadMore = false) => {
+            if (state.isLoading.drafts || !state.hasMore.drafts) return;
+            
+            try {
+                showLoading('draft');
+                const drafts = await apiRequest('/get-drafts');
+                
+                if (!isLoadMore) {
+                    draftListDiv.innerHTML = '<div id="draft-loading" class="loading-spinner hidden"></div>';
+                }
+                
+                if (drafts.length > 0) {
+                    drafts.forEach(draft => {
+                        const el = document.createElement('div');
+                        el.className = 'invoice-list-item';
+                        el.innerHTML = `
+                            <div class="invoice-list-content">
+                                <p class="invoice-list-header">Draft for: ${draft.vendor_name || 'N/A'}</p>
+                                <p class="invoice-list-subheader">Date: ${draft.date || 'N/A'} at ${draft.formatted_time || 'N/A'}</p>
+                            </div>
+                            <div class="invoice-list-actions">
+                                <button class="download-btn">Download</button>
+                                <button class="edit-draft-btn">Edit</button>
+                            </div>
+                        `;
+                        
+                        // Add event listeners
+                        el.querySelector('.download-btn').addEventListener('click', async () => {
+                            try {
+                                const formData = gatherFormData();
+                                const response = await fetch(`${BASE_URL}/download-draft-preview`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify(formData)
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error('Failed to generate PDF');
+                                }
+                                
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `DRAFT-${draft.row_number}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                            } catch (error) {
+                                showToast(error.message, true);
+                            }
+                        });
+                        
+                        el.querySelector('.edit-draft-btn').addEventListener('click', () => loadDraftIntoForm(draft));
+                        draftListDiv.appendChild(el);
+                    });
+                    
+                    state.hasMore.drafts = drafts.length === 10;
+                    state.currentPage.drafts++;
+                } else {
+                    if (!isLoadMore) {
+                        draftListDiv.innerHTML = '<p class="text-gray-500">No drafts saved.</p>';
+                    }
+                    state.hasMore.drafts = false;
+                }
+            } catch(error) {
+                showToast(error.message, true);
+            } finally {
+                hideLoading('draft');
+            }
+        };
+
+        const fetchAndRenderInvoices = async (isLoadMore = false) => {
+            if (state.isLoading.invoices || !state.hasMore.invoices) return;
+            
+            try {
+                showLoading('invoice');
+                const invoices = await apiRequest('/get-invoices');
+                
+                if (!isLoadMore) {
+                    invoiceListDiv.innerHTML = '<div id="invoice-loading" class="loading-spinner hidden"></div>';
+                }
+                
+                if (invoices.length > 0) {
+                    invoices.forEach(inv => {
+                        const statusColor = inv.status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                        const el = document.createElement('div');
+                        el.className = 'invoice-list-item';
+                        el.innerHTML = `
+                            <div class="invoice-list-content">
+                                <p class="invoice-list-header">Invoice ${inv.invoice_num} to ${inv.vendor_name}</p>
+                                <p class="invoice-list-subheader">Date: ${inv.invoice_date} at ${inv.formatted_time || 'N/A'}, Total: ${inv.total}</p>
+                            </div>
+                            <div class="invoice-list-actions">
+                                <span class="status-badge ${statusColor}">${inv.status}</span>
+                                <button class="toggle-status-btn">${inv.status === 'Paid' ? 'Mark Due' : 'Mark Paid'}</button>
+                            </div>
+                        `;
+                        
+                        el.querySelector('.toggle-status-btn').addEventListener('click', async () => {
+                            try {
+                                const result = await apiRequest('/update-status', 'POST', { row_number: inv.row_number });
+                                showToast(result.message);
+                                fetchAndRenderInvoices();
+                            } catch (error) {
+                                showToast(error.message, true);
+                            }
+                        });
+                        invoiceListDiv.appendChild(el);
+                    });
+                    
+                    state.hasMore.invoices = invoices.length === 10;
+                    state.currentPage.invoices++;
+                } else {
+                    if (!isLoadMore) {
+                        invoiceListDiv.innerHTML = '<p class="text-gray-500">No invoices sent.</p>';
+                    }
+                    state.hasMore.invoices = false;
+                }
+            } catch(error) {
+                showToast(error.message, true);
+            } finally {
+                hideLoading('invoice');
+            }
+        };
+
+        const fetchAndRenderItems = async () => {
+            try {
+                showLoading('item');
+                state.items = await apiRequest('/get-sweets');
+                itemListDisplay.innerHTML = '<div id="item-loading" class="loading-spinner hidden"></div>';
+                
+                if (state.items.length > 0) {
+                    state.items.forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'invoice-list-item';
+                        itemEl.innerHTML = `
+                            <div class="invoice-list-content">
+                                <p class="invoice-list-header">${item.name}</p>
+                                <p class="invoice-list-subheader">$${item.price}</p>
+                            </div>
+                            <div class="invoice-list-actions">
+                                <button class="edit-item-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded">Edit</button>
+                            </div>
+                        `;
+                        itemEl.querySelector('.edit-item-btn').addEventListener('click', () => openEditItemModal(item));
+                        itemListDisplay.appendChild(itemEl);
+                    });
+                } else {
+                    itemListDisplay.innerHTML = '<p>No items found. Add one below.</p>';
+                }
+            } catch(error) {
+                showToast(error.message, true);
+            } finally {
+                hideLoading('item');
+            }
+        };
+
+        // --- Event Handlers ---
+        const handleSaveDraft = async () => {
+            const payload = gatherFormData();
+            if (payload.items.length === 0) {
+                showToast('Add at least one item.', true);
+                return;
+            }
+            try {
+                const result = await apiRequest('/save-draft', 'POST', payload);
+                showToast(result.message);
+                resetInvoiceForm();
+                switchView('create');
+                fetchAndRenderDrafts();
+            } catch(error) {
+                showToast(error.message, true);
+            }
+        };
+
+        const handleInvoiceSubmit = async (e) => {
+            e.preventDefault();
+            const payload = gatherFormData();
+            if (payload.items.length === 0) {
+                showToast('Add at least one item.', true);
+                return;
+            }
+            try {
+                const result = await apiRequest('/generate-invoice', 'POST', payload);
+                showToast(result.message);
+                resetInvoiceForm();
+                switchView('invoices');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        };
+
+        const updateInvoiceStatus = async (row_number, status) => {
+            try {
+                const result = await apiRequest('/update-status', 'POST', { row_number, status });
+                showToast(result.message);
+                fetchAndRenderInvoices();
+            } catch(error) { showToast(error.message, true); }
+        };
+        
+        const handleDeleteDraft = async () => {
+            if (!state.currentDraftRow || !confirm('Delete this draft?')) return;
+            try {
+                const result = await apiRequest('/delete-draft', 'POST', { row_number: state.currentDraftRow });
+                showToast(result.message);
+                resetInvoiceForm();
+            } catch(error) { showToast(error.message, true); }
+        };
+        
+        const openEditModal = (vendor) => {
+             editVendorRowInput.value = vendor.row_number;
+             editVendorNameInput.value = vendor.name;
+             editVendorEmailInput.value = vendor.email;
+             editVendorAddressInput.value = vendor.address || '';
+             editVendorCityInput.value = vendor.city || '';
+             editVendorPhoneInput.value = vendor.phone || '';
+             editModal.style.display = 'flex';
+        };
+        const closeEditModal = () => editModal.style.display = 'none';
+
+        const handleAddVendor = async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('vendor-name').value,
+                email: document.getElementById('vendor-email').value,
+                address: document.getElementById('vendor-address').value,
+                city: document.getElementById('vendor-city').value,
+                phone: document.getElementById('vendor-phone').value
             };
-
-            const initializeApp = () => {
-                navInvoiceBtn.addEventListener('click', () => switchView('invoice'));
-                navVendorsBtn.addEventListener('click', () => switchView('vendors'));
-                vendorForm.addEventListener('submit', handleAddVendor);
-                editForm.addEventListener('submit', handleEditVendor);
-                deleteVendorBtn.addEventListener('click', handleDeleteVendor);
-                cancelEditBtn.addEventListener('click', closeEditModal);
-                itemSelect.addEventListener('change', updatePrice);
-                customPriceCheckbox.addEventListener('change', updatePrice);
-                invoiceForm.addEventListener('submit', handleInvoiceSubmit);
-
+            try {
+                await apiRequest('/add-vendor', 'POST', payload);
+                showToast('Vendor added!');
+                vendorForm.reset();
                 fetchAndRenderVendors();
-                setInitialDate();
-                updatePrice();
-                switchView('invoice');
+            } catch(error) { showToast(error.message, true); }
+        };
+        
+        const handleEditVendor = async(e) => {
+            e.preventDefault();
+            const payload = {
+                row_number: editVendorRowInput.value,
+                name: editVendorNameInput.value,
+                email: editVendorEmailInput.value,
+                address: editVendorAddressInput.value,
+                city: editVendorCityInput.value,
+                phone: editVendorPhoneInput.value
             };
+            try {
+                await apiRequest('/edit-vendor', 'POST', payload);
+                showToast('Vendor updated!');
+                closeEditModal();
+                fetchAndRenderVendors();
+            } catch(error) { showToast(error.message, true); }
+        };
 
-            initializeApp();
+        const handleDeleteVendor = async () => {
+            if (!confirm('Are you sure?')) return;
+            try {
+                await apiRequest('/delete-vendor', 'POST', {row_number: editVendorRowInput.value});
+                showToast('Vendor deleted.');
+                closeEditModal();
+                fetchAndRenderVendors();
+            } catch(error) { showToast(error.message, true); }
+        };
+
+        const openEditItemModal = (item) => {
+            document.getElementById('edit-item-row').value = item.row_number;
+            document.getElementById('edit-item-name').value = item.name;
+            document.getElementById('edit-item-price').value = item.price;
+            editItemModal.style.display = 'flex';
+        };
+
+        const closeEditItemModal = () => editItemModal.style.display = 'none';
+
+        const handleAddItem = async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('item-name').value,
+                price: parseFloat(document.getElementById('item-price').value)
+            };
+            try {
+                await apiRequest('/add-sweet', 'POST', payload);
+                showToast('Item added!');
+                itemForm.reset();
+                await fetchAndRenderItems();
+                // Update the item dropdowns in the invoice form
+                const rows = document.querySelectorAll('.item-row');
+                rows.forEach(row => {
+                    const select = row.querySelector('.item-name');
+                    const currentValue = select.value;
+                    const currentPrice = row.querySelector('.item-price').value;
+                    select.innerHTML = '<option value="">Select an item</option>' + 
+                        state.items.map(item => 
+                            `<option value="${item.name}" data-price="${item.price}" ${currentValue === item.name ? 'selected' : ''}>${item.name}</option>`
+                        ).join('');
+                    if (currentValue) {
+                        select.value = currentValue;
+                        row.querySelector('.item-price').value = currentPrice;
+                    }
+                });
+            } catch(error) { 
+                showToast(error.message, true); 
+            }
+        };
+
+        const handleEditItem = async(e) => {
+            e.preventDefault();
+            const payload = {
+                row_number: document.getElementById('edit-item-row').value,
+                name: document.getElementById('edit-item-name').value,
+                price: parseFloat(document.getElementById('edit-item-price').value)
+            };
+            try {
+                await apiRequest('/edit-sweet', 'POST', payload);
+                showToast('Item updated!');
+                closeEditItemModal();
+                await fetchAndRenderItems();
+                // Update the item dropdowns in the invoice form
+                const rows = document.querySelectorAll('.item-row');
+                rows.forEach(row => {
+                    const select = row.querySelector('.item-name');
+                    const currentValue = select.value;
+                    const currentPrice = row.querySelector('.item-price').value;
+                    select.innerHTML = '<option value="">Select an item</option>' + 
+                        state.items.map(item => 
+                            `<option value="${item.name}" data-price="${item.price}" ${currentValue === item.name ? 'selected' : ''}>${item.name}</option>`
+                        ).join('');
+                    if (currentValue) {
+                        select.value = currentValue;
+                        row.querySelector('.item-price').value = currentPrice;
+                    }
+                });
+            } catch(error) { 
+                showToast(error.message, true); 
+            }
+        };
+
+        const handleDeleteItem = async () => {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            try {
+                await apiRequest('/delete-sweet', 'POST', {
+                    row_number: document.getElementById('edit-item-row').value
+                });
+                showToast('Item deleted.');
+                closeEditItemModal();
+                fetchAndRenderItems();
+            } catch(error) { 
+                showToast(error.message, true); 
+            }
+        };
+
+        // --- Initialization ---
+        const setInitialDate = () => {
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const year = today.getFullYear();
+            dateInput.value = `${month}/${day}/${year}`;
+        };
+
+        // Add scroll event listeners for infinite scroll
+        const setupInfiniteScroll = () => {
+            const draftContainer = document.getElementById('draft-list');
+            const invoiceContainer = document.getElementById('invoice-list');
+            const vendorContainer = document.getElementById('vendor-list-display');
+
+            draftContainer.addEventListener('scroll', () => {
+                if (draftContainer.scrollTop + draftContainer.clientHeight >= draftContainer.scrollHeight - 100) {
+                    fetchAndRenderDrafts(true);
+                }
+            });
+
+            invoiceContainer.addEventListener('scroll', () => {
+                if (invoiceContainer.scrollTop + invoiceContainer.clientHeight >= invoiceContainer.scrollHeight - 100) {
+                    fetchAndRenderInvoices(true);
+                }
+            });
+        };
+
+        // Update initialization
+        const initializeApp = () => {
+            navButtons.forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+            addItemBtn.addEventListener('click', () => createItemRow());
+            invoiceForm.addEventListener('submit', handleInvoiceSubmit);
+            saveDraftBtn.addEventListener('click', handleSaveDraft);
+            formDeleteBtn.addEventListener('click', handleDeleteDraft);
+            vendorForm.addEventListener('submit', handleAddVendor);
+            editForm.addEventListener('submit', handleEditVendor);
+            deleteVendorBtn.addEventListener('click', handleDeleteVendor);
+            cancelEditBtn.addEventListener('click', closeEditModal);
+            itemForm.addEventListener('submit', handleAddItem);
+            editItemForm.addEventListener('submit', handleEditItem);
+            deleteItemBtn.addEventListener('click', handleDeleteItem);
+            cancelEditItemBtn.addEventListener('click', closeEditItemModal);
+
+            setupInfiniteScroll();
+            fetchAndRenderVendors();
+            fetchAndRenderItems();
+            resetInvoiceForm();
+        };
+
+        // Add download draft handler
+        document.getElementById('download-draft-btn').addEventListener('click', async () => {
+            if (!state.currentDraftRow) return;
+            try {
+                const formData = gatherFormData();
+                const response = await fetch(`${BASE_URL}/download-draft-preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+                
+                // Convert the response to a blob
+                const blob = await response.blob();
+                
+                // Create a download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `DRAFT-${state.currentDraftRow}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                showToast(error.message, true);
+            }
         });
+
+        initializeApp();
+    });
     </script>
 </body>
 </html>
